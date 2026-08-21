@@ -418,7 +418,7 @@ export const OrganizationDetailView: React.FC<OrganizationDetailViewProps> = ({
       )}
 
       {activeTab === 'usuarios' && (
-        <div className="card user-tab-panel" id="card-org-users">
+        <div id="card-org-users">
           <div className="card-head">
             <div className="htitle">
               <h3>Usuarios de la organización ({tenantUsers.length})</h3>
@@ -456,7 +456,7 @@ export const OrganizationDetailView: React.FC<OrganizationDetailViewProps> = ({
       )}
 
       {activeTab === 'modulos' && (
-        <div className="card user-tab-panel" id="card-org-modules">
+        <div id="card-org-modules">
           <div className="card-head">
             <div className="htitle">
               <h3>Módulos de la organización</h3>
