@@ -1,0 +1,6 @@
+{
+  "name": "WooX CRM",
+  "description": "Prototipo de CRM moderno para gestión de contactos, oportunidades comerciales, pipeline por etapas y asistencia inteligente.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
