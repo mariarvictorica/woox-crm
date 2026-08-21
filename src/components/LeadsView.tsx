@@ -118,7 +118,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
   const withoutOppCount = useMemo(() => {
     return contacts.filter(c => {
       const contactOpps = oppsByContact.get(c.id) || [];
-      const openOpps = contactOpps.filter(o => o.stage !== 'ganado' && o.stage !== 'perdido');
+      const openOpps = contactOpps.filter(o => ['nuevo', 'contactado', 'calificado', 'negociacion'].includes(o.stage));
       return openOpps.length === 0;
     }).length;
   }, [contacts, oppsByContact]);
@@ -174,7 +174,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
       // Opportunity
       if (filters.opportunity !== 'all') {
         const contactOpps = oppsByContact.get(c.id) || [];
-        const openOpps = contactOpps.filter(o => o.stage !== 'ganado' && o.stage !== 'perdido');
+        const openOpps = contactOpps.filter(o => ['nuevo', 'contactado', 'calificado', 'negociacion'].includes(o.stage));
         if (filters.opportunity === 'with_opp' && openOpps.length === 0) return false;
         if (filters.opportunity === 'without_opp' && openOpps.length > 0) return false;
       }
@@ -603,7 +603,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           <tbody id="leads-tbody">
             {sortedContacts.map(c => {
               const contactOpps = oppsByContact.get(c.id) || [];
-              const openOpps = contactOpps.filter(o => o.stage !== 'perdido');
+              const openOpps = contactOpps.filter(o => ['nuevo', 'contactado', 'calificado', 'negociacion'].includes(o.stage));
 
               return (
                 <tr
