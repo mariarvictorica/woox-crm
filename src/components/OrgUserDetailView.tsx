@@ -17,7 +17,7 @@ interface OrgUserDetailViewProps {
   onShowToast: (msg: string) => void;
 }
 
-const displayRole = (role: string) => (role === 'Manager' ? 'Org Manager' : role);
+const displayRole = (role: string) => (role === 'Manager' ? 'Manager' : role);
 
 /**
  * Super Admin's view of a single user inside one organization.

@@ -7,6 +7,8 @@ interface SuperAdminUsersViewProps {
   users: UserMember[];
   organizations: Organization[];
   onSelectUser: (userId: number) => void;
+  /** Opens the shared user form with the "link to an organization" step. */
+  onAddUser: () => void;
   onUpdateUser: (updatedUser: UserMember) => void;
   onSuspendUser: (userId: number, newOwnerId?: number) => void;
   onActivateUser: (userId: number) => void;
@@ -17,7 +19,7 @@ interface SuperAdminUsersViewProps {
 type StatusFilter = 'all' | 'Activo' | 'Invitado' | 'Inactivo';
 type RoleFilter = 'all' | 'Manager' | 'Rep' | 'Super Admin (SA)';
 
-const displayRole = (role: string) => (role === 'Manager' ? 'Org Manager' : role);
+const displayRole = (role: string) => (role === 'Manager' ? 'Manager' : role);
 
 /**
  * Cross-organization "Usuarios" tab: every user on the platform, so the
@@ -30,6 +32,7 @@ export const SuperAdminUsersView: React.FC<SuperAdminUsersViewProps> = ({
   users,
   organizations,
   onSelectUser,
+  onAddUser,
   onUpdateUser,
   onSuspendUser,
   onActivateUser,
@@ -66,6 +69,22 @@ export const SuperAdminUsersView: React.FC<SuperAdminUsersViewProps> = ({
         <div>
           <h1>Usuarios</h1>
           <p>Todos los usuarios de la plataforma, en todas las organizaciones &middot; {users.length} {users.length === 1 ? 'usuario' : 'usuarios'}</p>
+        </div>
+        <div className="head-actions">
+          <button
+            type="button"
+            id="btn-add-platform-user"
+            className="btn btn-primary"
+            onClick={onAddUser}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <line x1="19" y1="8" x2="19" y2="14" />
+              <line x1="22" y1="11" x2="16" y2="11" />
+            </svg>
+            Agregar usuario
+          </button>
         </div>
       </div>
 

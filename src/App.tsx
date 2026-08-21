@@ -90,6 +90,9 @@ export default function App() {
   const [isOppModalOpen, setIsOppModalOpen] = useState(false);
   const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
   const [isInviteUserDrawerOpen, setIsInviteUserDrawerOpen] = useState(false);
+  // Same drawer, opened from the platform-wide Usuarios tab, where the Super
+  // Admin must pick the organization before the rest of the form applies.
+  const [isPlatformUserDrawerOpen, setIsPlatformUserDrawerOpen] = useState(false);
   const [selectedUserDetails, setSelectedUserDetails] = useState<UserMember | null>(null);
   const [oppModalContactId, setOppModalContactId] = useState<number | undefined>(undefined);
   const [leadInitialFilters, setLeadInitialFilters] = useState<Partial<LeadFilterState> | null>(null);
@@ -660,6 +663,7 @@ export default function App() {
               users={users}
               organizations={organizations}
               onSelectUser={handleSelectGlobalUser}
+              onAddUser={() => setIsPlatformUserDrawerOpen(true)}
               onUpdateUser={handleSuperAdminUpdateUser}
               onSuspendUser={handleSuperAdminSuspendUser}
               onActivateUser={handleActivateUser}
@@ -793,6 +797,15 @@ export default function App() {
         isOpen={isInviteUserDrawerOpen}
         onClose={() => setIsInviteUserDrawerOpen(false)}
         onInviteUser={handleSaveInvitedUser}
+        onShowToast={showToast}
+      />
+
+      <InviteUserDrawer
+        isOpen={isPlatformUserDrawerOpen}
+        requireOrganizationSelect
+        organizations={organizations}
+        onClose={() => setIsPlatformUserDrawerOpen(false)}
+        onInviteUser={handleSuperAdminCreateUser}
         onShowToast={showToast}
       />
 

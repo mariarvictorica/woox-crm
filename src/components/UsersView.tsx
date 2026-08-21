@@ -11,11 +11,15 @@ interface UsersViewProps {
 
 type UserSortField = 'name' | 'email' | 'role' | 'status' | 'lastAccess';
 type SortDirection = 'asc' | 'desc' | null;
+// Only the roles that exist inside a single organization — the platform-wide
+// Super Admin role is never assigned to a member of the Manager's own team.
+type RoleFilter = 'all' | 'Manager' | 'Rep';
 
 export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSelectUser, onShowToast }) => {
   const [sortField, setSortField] = useState<UserSortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
 
   const currentOrganization = users[0]?.organization || 'Woox Pinturas y Acabados S.A. de C.V.';
 
@@ -36,6 +40,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => {
+      if (roleFilter !== 'all' && u.role !== roleFilter) return false;
       if (!searchTerm.trim()) return true;
       const term = searchTerm.toLowerCase();
       return (
@@ -46,7 +51,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
         (u.phone && u.phone.toLowerCase().includes(term))
       );
     });
-  }, [users, searchTerm]);
+  }, [users, searchTerm, roleFilter]);
 
   const sortedUsers = useMemo(() => {
     const list = [...filteredUsers];
@@ -106,7 +111,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
               {currentOrganization}
             </span>
           </div>
-          <p>Equipo comercial &middot; {users.length} miembros registrados</p>
+          <p>Equipo comercial</p>
         </div>
         <div className="head-actions">
           <button
@@ -128,7 +133,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
       {/* Quick Search & Summary bar */}
       <div className="leads-summary-bar" style={{ marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '240px' }}>
-          <div className="drawer-input-wrap" style={{ width: '100%', maxWidth: '320px' }}>
+          <div className="drawer-input-wrap" style={{ flex: 1, minWidth: '180px', maxWidth: '320px' }}>
             <input
               type="text"
               placeholder="Buscar por nombre, correo, puesto..."
@@ -156,6 +161,26 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
           </div>
+
+          <select
+            id="users-role-filter"
+            value={roleFilter}
+            onChange={e => setRoleFilter(e.target.value as RoleFilter)}
+            aria-label="Filtrar por rol"
+            style={{
+              flexShrink: 0,
+              background: 'var(--canvas)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--r-sm)',
+              padding: '7px 10px',
+              fontSize: '12.5px',
+              color: 'var(--ink-700)'
+            }}
+          >
+            <option value="all">Todos los roles</option>
+            <option value="Manager">Manager</option>
+            <option value="Rep">Rep</option>
+          </select>
           {searchTerm && (
             <button
               type="button"
@@ -283,7 +308,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
           {sortedUsers.length === 0 ? (
             <tr>
               <td colSpan={5} style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--ink-500)' }}>
-                No se encontraron usuarios con ese criterio de búsqueda.
+                No se encontraron usuarios con esos criterios.
               </td>
             </tr>
           ) : (

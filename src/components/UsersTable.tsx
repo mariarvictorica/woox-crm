@@ -30,7 +30,7 @@ interface UsersTableProps {
   emptyMessage?: string;
 }
 
-const displayRole = (role: string) => (role === 'Manager' ? 'Org Manager' : role);
+const displayRole = (role: string) => (role === 'Manager' ? 'Manager' : role);
 
 /**
  * The single users table — every row, action menu, edit drawer, and

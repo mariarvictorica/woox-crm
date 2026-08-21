@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { UserMember } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Organization, UserMember } from '../types';
 import { Dialog } from './Dialog';
 import { ConfirmDialog } from './ConfirmDialog';
+import { FormField } from './FormField';
+import { SearchableSelect } from './SearchableSelect';
 import { UserFormFields, UserFormValues } from './UserFormFields';
 
 interface InviteUserDrawerProps {
@@ -13,6 +15,16 @@ interface InviteUserDrawerProps {
   // existing "Invitar usuario" flow is unchanged; the Super Admin passes the
   // organization being viewed when adding a user from Organizaciones.
   organizationName?: string;
+  /**
+   * Set from the platform-wide "Usuarios" tab, where the Super Admin isn't
+   * standing inside any organization: the drawer then asks which organization
+   * to link the user to before anything else, and won't submit without one.
+   * Left off everywhere the organization is already known (Org Details),
+   * so that flow keeps passing `organizationName` and is untouched.
+   */
+  requireOrganizationSelect?: boolean;
+  /** Options for that picker. Only read when requireOrganizationSelect is set. */
+  organizations?: Organization[];
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -33,9 +45,13 @@ export const InviteUserDrawer: React.FC<InviteUserDrawerProps> = ({
   onClose,
   onInviteUser,
   onShowToast,
-  organizationName = 'Woox Pinturas y Acabados S.A. de C.V.'
+  organizationName = 'Woox Pinturas y Acabados S.A. de C.V.',
+  requireOrganizationSelect = false,
+  organizations = []
 }) => {
   const [values, setValues] = useState<UserFormValues>(emptyValues);
+  // Only meaningful when requireOrganizationSelect is set; '' = nothing picked yet.
+  const [selectedOrg, setSelectedOrg] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,11 +60,20 @@ export const InviteUserDrawer: React.FC<InviteUserDrawerProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     setValues(emptyValues);
+    setSelectedOrg('');
     setErrors({});
     setTouched({});
     setIsSubmitting(false);
     setShowDiscard(false);
   }, [isOpen]);
+
+  const orgOptions = useMemo(
+    () =>
+      organizations
+        .map(o => ({ value: o.name, label: o.name }))
+        .sort((a, b) => a.label.localeCompare(b.label, 'es')),
+    [organizations]
+  );
 
   const validateField = (field: string, v: UserFormValues): string => {
     switch (field) {
@@ -78,7 +103,8 @@ export const InviteUserDrawer: React.FC<InviteUserDrawerProps> = ({
   };
 
   const isDirty = Boolean(
-    values.firstName.trim() ||
+    (requireOrganizationSelect && selectedOrg) ||
+      values.firstName.trim() ||
       values.lastName.trim() ||
       values.email.trim() ||
       values.position.trim() ||
@@ -90,20 +116,24 @@ export const InviteUserDrawer: React.FC<InviteUserDrawerProps> = ({
     e.preventDefault();
 
     const nextErrors: Record<string, string> = {
+      organization:
+        requireOrganizationSelect && !selectedOrg ? 'Elegí a qué organización se vincula' : '',
       firstName: validateField('firstName', values),
       lastName: validateField('lastName', values),
       email: validateField('email', values),
       phone: validateField('phone', values)
     };
 
-    const order = ['firstName', 'lastName', 'email', 'phone'];
+    const order = ['organization', 'firstName', 'lastName', 'email', 'phone'];
     const firstBad = order.find(k => nextErrors[k]);
     if (firstBad) {
       setErrors(nextErrors);
-      setTouched({ firstName: true, lastName: true, email: true, phone: true });
-      requestAnimationFrame(() =>
-        document.getElementById(`invite-user-${firstBad === 'firstName' ? 'firstname' : firstBad === 'lastName' ? 'lastname' : firstBad}`)?.focus()
-      );
+      setTouched({ organization: true, firstName: true, lastName: true, email: true, phone: true });
+      if (firstBad !== 'organization') {
+        requestAnimationFrame(() =>
+          document.getElementById(`invite-user-${firstBad === 'firstName' ? 'firstname' : firstBad === 'lastName' ? 'lastname' : firstBad}`)?.focus()
+        );
+      }
       return;
     }
 
@@ -120,7 +150,7 @@ export const InviteUserDrawer: React.FC<InviteUserDrawerProps> = ({
       lastName: values.lastName.trim(),
       email: values.email.trim().toLowerCase(),
       role: values.role,
-      organization: organizationName,
+      organization: requireOrganizationSelect ? selectedOrg : organizationName,
       position: values.position.trim() || undefined,
       phone: values.phone.trim() ? `${values.countryCode} ${values.phone.trim()}` : undefined,
       status: 'Invitado',
@@ -184,6 +214,26 @@ export const InviteUserDrawer: React.FC<InviteUserDrawerProps> = ({
           </>
         }
       >
+        {requireOrganizationSelect && (
+          <FormField
+            label="Organización"
+            required
+            hint="El usuario queda dado de alta dentro de esta organización."
+            error={touched.organization ? errors.organization : ''}
+          >
+            <SearchableSelect
+              options={orgOptions}
+              value={selectedOrg}
+              onChange={org => {
+                setSelectedOrg(org);
+                if (errors.organization) setErrors(prev => ({ ...prev, organization: '' }));
+              }}
+              allLabel="Seleccioná una organización"
+              ariaLabel="Organización a la que se vincula el usuario"
+            />
+          </FormField>
+        )}
+
         <UserFormFields
           values={values}
           errors={errors}
