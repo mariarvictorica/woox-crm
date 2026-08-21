@@ -174,45 +174,43 @@ export const LeadDetailView: React.FC<LeadDetailViewProps> = ({
 
       {/* Header with Hierarchy & Requested Action Button Row: Prioritario, Editar, Crear oportunidad */}
       <div className="detail-head" id="lead-detail-header">
-        <div className="detail-title" style={{ flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <h1 id="dt-name">
-                {contact.name}
-                {contact.company ? ` — ${contact.company}` : ''}
-              </h1>
-              {contact.hot && (
-                <span className="priority-badge-pill" id="badge-lead-priority" title="Contacto prioritario de alta atención">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                  Prioritario
-                </span>
-              )}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '13px', color: 'var(--ink-500)' }}>
-              {/* Same origin pill the Contactos list uses, via the shared
-                  helpers — replaces a 20px square that also repeated the
-                  origin name in the span right after it. */}
-              <span
-                className={`origin-badge origin-badge-${getOriginBadgeClass(contact.src, contact.srcLabel)}`}
-                title={`Origen: ${getOriginDisplayName(contact.src, contact.srcLabel)}`}
-              >
-                {getOriginDisplayName(contact.src, contact.srcLabel)}
+        <div className="detail-title">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <h1 id="dt-name">
+              {contact.name}
+              {contact.company ? ` — ${contact.company}` : ''}
+            </h1>
+            {contact.hot && (
+              <span className="priority-badge-pill" id="badge-lead-priority" title="Contacto prioritario de alta atención">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+                Prioritario
               </span>
-              {contact.giro && (
-                <>
-                  <span>&middot;</span>
-                  <span>{contact.giro}</span>
-                </>
-              )}
-              {contact.region && (
-                <>
-                  <span>&middot;</span>
-                  <span>{contact.region}</span>
-                </>
-              )}
-            </div>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '13px', color: 'var(--ink-500)' }}>
+            {/* Same origin pill the Contactos list uses, via the shared
+                helpers — replaces a 20px square that also repeated the
+                origin name in the span right after it. */}
+            <span
+              className={`origin-badge origin-badge-${getOriginBadgeClass(contact.src, contact.srcLabel)}`}
+              title={`Origen: ${getOriginDisplayName(contact.src, contact.srcLabel)}`}
+            >
+              {getOriginDisplayName(contact.src, contact.srcLabel)}
+            </span>
+            {contact.giro && (
+              <>
+                <span>&middot;</span>
+                <span>{contact.giro}</span>
+              </>
+            )}
+            {contact.region && (
+              <>
+                <span>&middot;</span>
+                <span>{contact.region}</span>
+              </>
+            )}
           </div>
         </div>
 
