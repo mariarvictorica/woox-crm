@@ -460,7 +460,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           id="kpi-open-opps"
           role="button"
           tabIndex={0}
-          onClick={() => onNavigate?.('pipeline')}
+          onClick={() => onNavigate?.('opportunities')}
           title="Ver pipeline de oportunidades activas"
         >
           <div className="kpi-label">Oportunidades activas</div>
