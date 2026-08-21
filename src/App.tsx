@@ -132,19 +132,15 @@ export default function App() {
     // WooX's own team feed, which a cross-tenant Super Admin action must
     // never touch.
     const ownerId = Date.now();
+    const fullOwnerName = `${input.ownerFirstName.trim()} ${input.ownerLastName.trim()}`.trim();
     const ownerInitials =
-      input.ownerName
-        .trim()
-        .split(' ')
-        .filter(Boolean)
-        .map(w => w[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase() || 'U';
+      `${input.ownerFirstName.trim()[0] || ''}${input.ownerLastName.trim()[0] || ''}`.toUpperCase() || 'U';
 
     const newOwner: UserMember = {
       id: ownerId,
-      name: input.ownerName.trim(),
+      name: fullOwnerName,
+      firstName: input.ownerFirstName.trim(),
+      lastName: input.ownerLastName.trim(),
       email: input.ownerEmail.trim().toLowerCase(),
       role: 'Manager',
       organization: input.name.trim(),

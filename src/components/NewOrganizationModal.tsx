@@ -9,7 +9,8 @@ import { COUNTRY_CODES } from '../data/initialData';
 // responsible for turning that into an actual user record and an ownerId.
 export interface NewOrganizationInput {
   name: string;
-  ownerName: string;
+  ownerFirstName: string;
+  ownerLastName: string;
   ownerEmail: string;
   tradeName?: string;
   taxId?: string;
@@ -32,7 +33,8 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
   onCreateOrganization
 }) => {
   const [name, setName] = useState('');
-  const [ownerName, setOwnerName] = useState('');
+  const [ownerFirstName, setOwnerFirstName] = useState('');
+  const [ownerLastName, setOwnerLastName] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
   const [tradeName, setTradeName] = useState('');
   const [taxId, setTaxId] = useState('');
@@ -49,7 +51,8 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setName('');
-      setOwnerName('');
+      setOwnerFirstName('');
+      setOwnerLastName('');
       setOwnerEmail('');
       setTradeName('');
       setTaxId('');
@@ -66,7 +69,8 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
 
   const isDirty = Boolean(
     name.trim() ||
-      ownerName.trim() ||
+      ownerFirstName.trim() ||
+      ownerLastName.trim() ||
       ownerEmail.trim() ||
       tradeName.trim() ||
       taxId.trim() ||
@@ -81,8 +85,10 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
     switch (field) {
       case 'name':
         return v ? '' : 'Escribí el nombre de la organización';
-      case 'ownerName':
+      case 'ownerFirstName':
         return v ? '' : 'Escribí el nombre del Owner';
+      case 'ownerLastName':
+        return v ? '' : 'Escribí el apellido del Owner';
       case 'ownerEmail':
         if (!v) return 'Escribí el correo del Owner';
         return EMAIL_RE.test(v) ? '' : 'Revisá el formato del correo (ej. owner@empresa.com)';
@@ -110,7 +116,8 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
 
     const nextErrors: Record<string, string> = {
       name: validateField('name', name),
-      ownerName: validateField('ownerName', ownerName),
+      ownerFirstName: validateField('ownerFirstName', ownerFirstName),
+      ownerLastName: validateField('ownerLastName', ownerLastName),
       ownerEmail: validateField('ownerEmail', ownerEmail),
       email: validateField('email', email)
     };
@@ -118,7 +125,7 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
     const firstBad = Object.keys(nextErrors).find(k => nextErrors[k]);
     if (firstBad) {
       setErrors(nextErrors);
-      setTouched({ name: true, ownerName: true, ownerEmail: true, email: true });
+      setTouched({ name: true, ownerFirstName: true, ownerLastName: true, ownerEmail: true, email: true });
       // Point at the offending field instead of making them re-scan the form.
       // Nothing they typed is cleared.
       if (firstBad === 'email') setShowOptional(true);
@@ -130,7 +137,8 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
 
     onCreateOrganization({
       name: name.trim(),
-      ownerName: ownerName.trim(),
+      ownerFirstName: ownerFirstName.trim(),
+      ownerLastName: ownerLastName.trim(),
       ownerEmail: ownerEmail.trim(),
       tradeName: tradeName.trim() || undefined,
       taxId: taxId.trim() || undefined,
@@ -191,19 +199,35 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
         <div className="field-section">
           <div className="field-section-label">Owner de la organización</div>
 
-          <FormField label="Nombre" htmlFor="org-form-ownerName" required error={err('ownerName')}>
-            <input
-              type="text"
-              id="org-form-ownerName"
-              placeholder="Ej. María Fernanda López"
-              value={ownerName}
-              onChange={e => {
-                setOwnerName(e.target.value);
-                clearError('ownerName');
-              }}
-              onBlur={e => handleBlur('ownerName', e.target.value)}
-            />
-          </FormField>
+          <div className="field-row">
+            <FormField label="Nombre" htmlFor="org-form-ownerFirstName" required error={err('ownerFirstName')}>
+              <input
+                type="text"
+                id="org-form-ownerFirstName"
+                placeholder="Ej. María"
+                value={ownerFirstName}
+                onChange={e => {
+                  setOwnerFirstName(e.target.value);
+                  clearError('ownerFirstName');
+                }}
+                onBlur={e => handleBlur('ownerFirstName', e.target.value)}
+              />
+            </FormField>
+
+            <FormField label="Apellido" htmlFor="org-form-ownerLastName" required error={err('ownerLastName')}>
+              <input
+                type="text"
+                id="org-form-ownerLastName"
+                placeholder="Ej. López García"
+                value={ownerLastName}
+                onChange={e => {
+                  setOwnerLastName(e.target.value);
+                  clearError('ownerLastName');
+                }}
+                onBlur={e => handleBlur('ownerLastName', e.target.value)}
+              />
+            </FormField>
+          </div>
 
           <FormField
             label="Correo"
