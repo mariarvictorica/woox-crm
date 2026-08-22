@@ -8,6 +8,8 @@ interface SidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
   role: PlatformRole;
+  /** Only the Owner of an organization gets the "Mi organización" item. */
+  canManageOrganization?: boolean;
   onSwitchRole: (role: PlatformRole) => void;
   sidebarMode: SidebarMode;
   onToggleSidebarMode: () => void;
@@ -19,6 +21,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
   onToggleCollapse,
   role,
+  canManageOrganization = false,
   onSwitchRole,
   sidebarMode,
   onToggleSidebarMode
@@ -197,6 +200,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="label">Usuarios</span>
               {collapsed && <span className="nav-tooltip">Usuarios</span>}
             </button>
+
+            {canManageOrganization && (
+              <button
+                id="nav-org-management"
+                className={`nav-item ${activeNav === 'org-management' ? 'active' : ''}`}
+                onClick={() => onNavigate('org-management')}
+              >
+                <div className="nav-icon-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4M9 7h6M9 11h6M9 15h6" />
+                  </svg>
+                </div>
+                <span className="label">Mi organización</span>
+                {collapsed && <span className="nav-tooltip">Mi organización</span>}
+              </button>
+            )}
           </>
         )}
       </nav>

@@ -745,6 +745,7 @@ export const OrganizationDetailView: React.FC<OrganizationDetailViewProps> = ({
       <InviteUserDrawer
         isOpen={isAddUserOpen}
         organizationName={organization.name}
+        existingUsers={users}
         onClose={() => setIsAddUserOpen(false)}
         onInviteUser={onCreateUser}
         onShowToast={onShowToast}

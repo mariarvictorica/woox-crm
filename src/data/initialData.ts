@@ -496,6 +496,43 @@ export const USER_ROLES_LIST = [
   { value: 'Manager', label: 'Manager', desc: 'Supervisión de equipo, reportes y gestión comercial' }
 ];
 
+/** Same email shape check everywhere one is asked for. Lived as a local
+ *  constant inside InviteUserDrawer until a second and third caller needed
+ *  it — the country-code list drifted that way before. */
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Who is sitting in front of the prototype. Seeds the session state in
+ *  App.tsx rather than being read directly, so the sign-in flow only has to
+ *  write that state and nothing else changes. */
+export const CURRENT_USER_ID = 1;
+
+export type OrgProfileFieldKey = 'logoUrl' | 'tradeName' | 'taxId' | 'address' | 'email' | 'phone';
+
+export interface OrgProfileField {
+  key: OrgProfileFieldKey;
+  label: string;
+}
+
+/** What the Owner still has to fill in after the Super Admin creates the
+ *  organization. `name` is absent on purpose: creating one without a name is
+ *  impossible, so it is never pending. */
+export const ORG_PROFILE_FIELDS: OrgProfileField[] = [
+  { key: 'logoUrl', label: 'Logo' },
+  { key: 'tradeName', label: 'Nombre comercial' },
+  { key: 'taxId', label: 'RFC' },
+  { key: 'address', label: 'Dirección' },
+  { key: 'email', label: 'Correo de la organización' },
+  { key: 'phone', label: 'Teléfono' }
+];
+
+/** Drives both the Dashboard notice and the "Mi organización" view, so the
+ *  two can never disagree about what counts as missing. */
+export function getOrgMissingFields(org?: Organization): OrgProfileField[] {
+  if (!org) return [];
+  return ORG_PROFILE_FIELDS.filter(f => !(org[f.key] || '').toString().trim());
+}
+
+
 export const INITIAL_USERS: UserMember[] = [
   {
     id: 1,

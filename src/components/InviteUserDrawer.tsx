@@ -5,6 +5,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { FormField } from './FormField';
 import { SearchableSelect } from './SearchableSelect';
 import { UserFormFields, UserFormValues } from './UserFormFields';
+import { EMAIL_RE } from '../data/initialData';
 
 interface InviteUserDrawerProps {
   isOpen: boolean;
@@ -25,9 +26,13 @@ interface InviteUserDrawerProps {
   requireOrganizationSelect?: boolean;
   /** Options for that picker. Only read when requireOrganizationSelect is set. */
   organizations?: Organization[];
+  /**
+   * Everyone already on the platform, so the same address can't be invited
+   * twice. Checked globally rather than per organization because the email is
+   * the login identity, not a per-tenant label.
+   */
+  existingUsers?: UserMember[];
 }
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const emptyValues: UserFormValues = {
   firstName: '',
@@ -45,9 +50,10 @@ export const InviteUserDrawer: React.FC<InviteUserDrawerProps> = ({
   onClose,
   onInviteUser,
   onShowToast,
-  organizationName = 'Woox Pinturas y Acabados S.A. de C.V.',
+  organizationName,
   requireOrganizationSelect = false,
-  organizations = []
+  organizations = [],
+  existingUsers = []
 }) => {
   const [values, setValues] = useState<UserFormValues>(emptyValues);
   // Only meaningful when requireOrganizationSelect is set; '' = nothing picked yet.
@@ -81,9 +87,15 @@ export const InviteUserDrawer: React.FC<InviteUserDrawerProps> = ({
         return v.firstName.trim() ? '' : 'Escribí el nombre';
       case 'lastName':
         return v.lastName.trim() ? '' : 'Escribí el apellido';
-      case 'email':
-        if (!v.email.trim()) return 'Escribí el correo electrónico';
-        return EMAIL_RE.test(v.email.trim()) ? '' : 'Revisá el formato del correo';
+      case 'email': {
+        const email = v.email.trim().toLowerCase();
+        if (!email) return 'Escribí el correo electrónico';
+        if (!EMAIL_RE.test(email)) return 'Revisá el formato del correo';
+        if (existingUsers.some(u => u.email.trim().toLowerCase() === email)) {
+          return 'Ya existe un usuario con este correo';
+        }
+        return '';
+      }
       case 'phone':
         if (!v.phone.trim()) return '';
         return v.phone.replace(/\D/g, '').length >= 7 ? '' : 'El teléfono necesita al menos 7 dígitos';
@@ -116,8 +128,13 @@ export const InviteUserDrawer: React.FC<InviteUserDrawerProps> = ({
     e.preventDefault();
 
     const nextErrors: Record<string, string> = {
-      organization:
-        requireOrganizationSelect && !selectedOrg ? 'Elegí a qué organización se vincula' : '',
+      organization: requireOrganizationSelect
+        ? selectedOrg
+          ? ''
+          : 'Elegí a qué organización se vincula'
+        : organizationName
+          ? ''
+          : 'No pudimos determinar tu organización',
       firstName: validateField('firstName', values),
       lastName: validateField('lastName', values),
       email: validateField('email', values),

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Contact, Opportunity, LeadSortOption, LeadFilterState } from '../types';
+import { OPEN_STAGES } from '../data/initialData';
 
 interface LeadsViewProps {
   contacts: Contact[];
@@ -118,7 +119,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
   const withoutOppCount = useMemo(() => {
     return contacts.filter(c => {
       const contactOpps = oppsByContact.get(c.id) || [];
-      const openOpps = contactOpps.filter(o => ['nuevo', 'contactado', 'calificado', 'negociacion'].includes(o.stage));
+      const openOpps = contactOpps.filter(o => OPEN_STAGES.includes(o.stage));
       return openOpps.length === 0;
     }).length;
   }, [contacts, oppsByContact]);
@@ -174,7 +175,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
       // Opportunity
       if (filters.opportunity !== 'all') {
         const contactOpps = oppsByContact.get(c.id) || [];
-        const openOpps = contactOpps.filter(o => ['nuevo', 'contactado', 'calificado', 'negociacion'].includes(o.stage));
+        const openOpps = contactOpps.filter(o => OPEN_STAGES.includes(o.stage));
         if (filters.opportunity === 'with_opp' && openOpps.length === 0) return false;
         if (filters.opportunity === 'without_opp' && openOpps.length > 0) return false;
       }
@@ -603,7 +604,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           <tbody id="leads-tbody">
             {sortedContacts.map(c => {
               const contactOpps = oppsByContact.get(c.id) || [];
-              const openOpps = contactOpps.filter(o => ['nuevo', 'contactado', 'calificado', 'negociacion'].includes(o.stage));
+              const openOpps = contactOpps.filter(o => OPEN_STAGES.includes(o.stage));
 
               return (
                 <tr

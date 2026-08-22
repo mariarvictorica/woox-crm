@@ -20,7 +20,8 @@ import {
   INITIAL_USERS,
   INITIAL_ORGANIZATIONS,
   INITIAL_NOTES,
-  STAGE_LABEL
+  STAGE_LABEL,
+  CURRENT_USER_ID
 } from './data/initialData';
 import { TopBanner } from './components/TopBanner';
 import { Sidebar } from './components/Sidebar';
@@ -38,6 +39,7 @@ import { NewLeadModal } from './components/NewLeadModal';
 import { NewOpportunityModal } from './components/NewOpportunityModal';
 import { NewOrganizationModal, NewOrganizationInput } from './components/NewOrganizationModal';
 import { InviteUserDrawer } from './components/InviteUserDrawer';
+import { OrgManagementView } from './components/OrgManagementView';
 import { UserDetailView } from './components/UserDetailView';
 import { Toast } from './components/Toast';
 
@@ -68,6 +70,9 @@ export default function App() {
   const [organizations, setOrganizations] = useState<Organization[]>(INITIAL_ORGANIZATIONS);
 
   const [currentRole, setCurrentRole] = useState<PlatformRole>('manager');
+  // Who is signed in. State rather than a constant so the sign-in flow can
+  // just write it; every derived value below follows automatically.
+  const [currentUserId] = useState<number>(CURRENT_USER_ID);
   // Defaults to 'hp' on every load, deliberately not persisted beyond the
   // session (no localStorage) — nobody should land in the experimental
   // theme by accident on a fresh visit.
@@ -169,7 +174,20 @@ export default function App() {
   };
 
   const handleUpdateOrganization = (updated: Organization) => {
+    const previous = organizations.find(o => o.id === updated.id);
     setOrganizations(prev => prev.map(o => (o.id === updated.id ? updated : o)));
+
+    // UserMember.organization holds the organization's NAME, not its id, and
+    // five different places filter on that string. Without re-linking here a
+    // rename silently orphans every member of the tenant: they vanish from
+    // Usuarios, from the organization's own tab, and from the Super Admin's
+    // per-organization filter.
+    if (previous && previous.name !== updated.name) {
+      setUsers(prev =>
+        prev.map(u => (u.organization === previous.name ? { ...u, organization: updated.name } : u))
+      );
+    }
+
     showToast(`Organización "${updated.name}" actualizada con éxito`);
   };
 
@@ -588,7 +606,15 @@ export default function App() {
   // there's no "switch tenant" concept on that side. Filtering by its name
   // keeps organizations created from the Super Admin side (and their Owner
   // users) out of WooX's own Usuarios list.
-  const woox = organizations.find(o => o.id === 1);
+  // The signed-in user is looked up in `users` rather than snapshotted, so
+  // editing their own profile is reflected without extra plumbing.
+  const currentUser = users.find(u => u.id === currentUserId);
+  const currentOrg =
+    organizations.find(o => o.name === currentUser?.organization) ||
+    organizations.find(o => o.id === 1);
+  const isOrgOwner = Boolean(currentUser && currentOrg && currentOrg.ownerId === currentUser.id);
+
+  const woox = currentOrg;
   const wooxUsers = users.filter(u => u.organization === woox?.name);
 
   return (
@@ -605,6 +631,7 @@ export default function App() {
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(prev => !prev)}
           role={currentRole}
+          canManageOrganization={isOrgOwner}
           onSwitchRole={handleSwitchRole}
           sidebarMode={sidebarMode}
           onToggleSidebarMode={() => setSidebarMode(prev => (prev === 'dark' ? 'light' : 'dark'))}
@@ -678,6 +705,7 @@ export default function App() {
               onNavigate={handleNavigate}
               onNavigateToLeadsWithoutOpp={handleNavigateToLeadsWithoutOpp}
               onSelectOpportunity={handleSelectOpportunity}
+              organization={isOrgOwner ? currentOrg : undefined}
             />
           )}
 
@@ -750,6 +778,15 @@ export default function App() {
             />
           )}
 
+          {currentView === 'org-management' && isOrgOwner && currentOrg && (
+            <OrgManagementView
+              organization={currentOrg}
+              owner={currentUser}
+              allOrganizations={organizations}
+              onUpdateOrganization={handleUpdateOrganization}
+            />
+          )}
+
           {currentView === 'user-detail' && selectedUserDetails && (
             <UserDetailView
               user={selectedUserDetails}
@@ -791,6 +828,8 @@ export default function App() {
 
       <InviteUserDrawer
         isOpen={isInviteUserDrawerOpen}
+        organizationName={currentOrg?.name}
+        existingUsers={users}
         onClose={() => setIsInviteUserDrawerOpen(false)}
         onInviteUser={handleSaveInvitedUser}
         onShowToast={showToast}
@@ -800,6 +839,7 @@ export default function App() {
         isOpen={isPlatformUserDrawerOpen}
         requireOrganizationSelect
         organizations={organizations}
+        existingUsers={users}
         onClose={() => setIsPlatformUserDrawerOpen(false)}
         onInviteUser={handleSuperAdminCreateUser}
         onShowToast={showToast}

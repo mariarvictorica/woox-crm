@@ -98,7 +98,7 @@ export interface UserMember {
   avatarUrl?: string;
 }
 
-export type ViewType = 'dashboard' | 'leads' | 'opportunities' | 'users' | 'lead-detail' | 'opp-detail' | 'user-detail' | 'organizations' | 'org-detail' | 'org-user-detail' | 'sa-users';
+export type ViewType = 'dashboard' | 'leads' | 'opportunities' | 'users' | 'lead-detail' | 'opp-detail' | 'user-detail' | 'organizations' | 'org-detail' | 'org-user-detail' | 'sa-users' | 'org-management';
 export type OppSegment = 'open' | 'all' | 'closed';
 
 // Which top-level panel the current session is viewing: the Org Manager's

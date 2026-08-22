@@ -9,8 +9,16 @@ import {
   CartesianGrid,
   Cell
 } from 'recharts';
-import { Opportunity, ActivityEvent, Contact, ViewType, StageKey } from '../types';
-import { STAGE_LABEL, EMPLOYEE_PROFILES, formatMoney, OPEN_STAGES } from '../data/initialData';
+import { Opportunity, ActivityEvent, Contact, ViewType, StageKey, Organization } from '../types';
+import {
+  STAGE_LABEL,
+  EMPLOYEE_PROFILES,
+  formatMoney,
+  OPEN_STAGES,
+  ORG_PROFILE_FIELDS,
+  getOrgMissingFields
+} from '../data/initialData';
+import { OrgProfileChecklistBanner } from './OrgProfileChecklistBanner';
 import { UserAvatar } from './UserAvatar';
 
 interface DashboardViewProps {
@@ -20,6 +28,9 @@ interface DashboardViewProps {
   onNavigate?: (view: ViewType) => void;
   onNavigateToLeadsWithoutOpp?: () => void;
   onSelectOpportunity?: (oppId: number) => void;
+  /** Only passed when the viewer owns this organization; absent otherwise,
+   *  which is what keeps the setup notice out of everyone else's Dashboard. */
+  organization?: Organization;
 }
 
 interface TeamActivity {
@@ -204,10 +215,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   opportunities,
   onNavigate,
   onNavigateToLeadsWithoutOpp,
-  onSelectOpportunity
+  onSelectOpportunity,
+  organization
 }) => {
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>('');
   const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
+
+  const orgMissing = useMemo(() => getOrgMissingFields(organization), [organization]);
 
   // 1. Process won opportunities grouped by month
   const wonData = useMemo(() => {
@@ -414,6 +428,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <p id="dash-subtitle">Woox Pinturas y Acabados S.A. de C.V. · Enrique Macias</p>
         </div>
       </header>
+
+      {orgMissing.length > 0 && (
+        <OrgProfileChecklistBanner
+          missing={orgMissing}
+          total={ORG_PROFILE_FIELDS.length}
+          onComplete={() => onNavigate?.('org-management')}
+        />
+      )}
 
       {/* 2. Tarjetas Métricas: Contactos sin oportunidad activa & Oportunidades activas */}
       <div className="manager-kpi-grid" id="dash-kpis" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
