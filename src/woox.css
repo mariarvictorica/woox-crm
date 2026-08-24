@@ -640,6 +640,87 @@ html[data-design-system='seline'] {
   --font-display: 'Lato', 'Helvetica Neue', Arial, ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Every text control behaves the same way, in every state.
+   The reference specifies one input treatment — "white fill, 6px radius, 1px
+   border #d6d3d1, placeholder #78716c, focus ring 2px #3ba6f1" — but the app
+   had three: the Oportunidades search matched it, the form fields filled
+   themselves with the page canvas instead of white, and the Usuarios and
+   platform search boxes set fill, border and a 4px radius straight from JSX.
+   Unified here rather than by editing each component, so the other two design
+   systems keep their own input language untouched.
+
+   !important is what reaches the inline ones; a stylesheet cannot otherwise
+   override a style attribute. File inputs are excluded — they are hidden
+   triggers for the avatar and logo pickers, not fields. */
+html[data-design-system='seline'] input:not([type='file']),
+html[data-design-system='seline'] select,
+html[data-design-system='seline'] textarea,
+html[data-design-system='seline'] .searchable-select-trigger {
+  background: var(--paper) !important;
+  border: 1px solid var(--steel) !important;
+  border-radius: var(--r-md) !important;
+  color: var(--ink);
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+
+/* Placeholder is Warm Gray, one step lighter than body text. */
+html[data-design-system='seline'] input::placeholder,
+html[data-design-system='seline'] textarea::placeholder {
+  color: var(--ink-500);
+  opacity: 1;
+}
+
+/* Hover reads as "this is interactive" without committing to the focus ring. */
+html[data-design-system='seline'] input:not([type='file']):not(:disabled):hover,
+html[data-design-system='seline'] select:not(:disabled):hover,
+html[data-design-system='seline'] textarea:not(:disabled):hover,
+html[data-design-system='seline'] .searchable-select-trigger:hover {
+  border-color: var(--ink-300) !important;
+}
+
+/* Selected: the same flat 2px cyan ring on every control, no blurred glow.
+   Repeats the earlier focus rule with the wider selector set so the search
+   boxes and the searchable select get it too. */
+/* :not(:disabled) here purely to match the hover rule's specificity — without
+   it, hovering a focused field showed the hover grey border under the cyan
+   ring. Focus comes later in source order, so equal specificity means it
+   wins. */
+html[data-design-system='seline'] input:not([type='file']):not(:disabled):focus,
+html[data-design-system='seline'] select:not(:disabled):focus,
+html[data-design-system='seline'] textarea:not(:disabled):focus,
+html[data-design-system='seline'] .searchable-select-trigger.active {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--accent-ring) !important;
+  outline: none;
+}
+
+/* Invalid keeps the same geometry, only the hue changes, so a field in error
+   still reads as the same component. */
+/* The :not() guards on the hover rule above inflate its specificity past a
+   plain .has-error selector, so a hovered field in error was showing the hover
+   grey instead of red. Matched shape here so error wins on source order, and
+   an errored field stays red whether hovered, focused or neither. */
+html[data-design-system='seline'] .field-group.has-error input:not([type='file']),
+html[data-design-system='seline'] .field-group.has-error select:not(:disabled),
+html[data-design-system='seline'] .field-group.has-error textarea:not(:disabled) {
+  border-color: var(--crit) !important;
+}
+html[data-design-system='seline'] .field-group.has-error input:focus,
+html[data-design-system='seline'] .field-group.has-error select:focus,
+html[data-design-system='seline'] .field-group.has-error textarea:focus {
+  box-shadow: 0 0 0 2px var(--crit-bg) !important;
+}
+
+/* Inactive: recessed fill and Ash Gray text, the reference's disabled colour. */
+html[data-design-system='seline'] input:disabled,
+html[data-design-system='seline'] select:disabled,
+html[data-design-system='seline'] textarea:disabled {
+  background: var(--cloud) !important;
+  border-color: var(--fog) !important;
+  color: var(--ink-300);
+  cursor: not-allowed;
+}
+
 /* Tags carry fill only — no outline. The reference reserves hairline borders
    for cards and nav ("the border IS the structure" applies to surfaces), while
    its own tag treatment is a solid pill. Covers the inline borders too, which
