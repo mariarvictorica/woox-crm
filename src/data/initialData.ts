@@ -672,6 +672,233 @@ export const INITIAL_USERS: UserMember[] = [
     avatarBg: 'var(--storm-deep)',
     avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80'
   }
+,
+
+  // --- Tenants de demo: Owners y equipos de las otras organizaciones de la
+  // plataforma. Existen para que el panel del Super Admin se vea como una
+  // plataforma en uso y no como una sola fila. ---
+  {
+    id: 20,
+    name: 'Rocío Alcántara',
+    firstName: 'Rocío',
+    lastName: 'Alcántara',
+    position: 'Directora General',
+    phone: '+52 81 8140 2277',
+    email: 'roc.alcantara@aceval.mx',
+    role: 'Manager',
+    organization: 'Distribuidora Aceval S.A. de C.V.',
+    status: 'Activo',
+    lastAccess: 'hoy, 08:15',
+    initials: 'RA',
+    avatarBg: 'var(--primary)'
+  },
+  {
+    id: 21,
+    name: 'Gustavo Berrocal',
+    firstName: 'Gustavo',
+    lastName: 'Berrocal',
+    position: 'Gerente General',
+    phone: '+52 614 415 8890',
+    email: 'g.berrocal@elancla.mx',
+    role: 'Manager',
+    organization: 'Grupo Ferretero del Norte S.A.',
+    status: 'Activo',
+    lastAccess: 'ayer, 17:40',
+    initials: 'GB',
+    avatarBg: 'var(--info)'
+  },
+  {
+    id: 22,
+    name: 'Nayeli Chan',
+    firstName: 'Nayeli',
+    lastName: 'Chan',
+    position: 'Socia fundadora',
+    phone: '+52 999 287 1130',
+    email: 'nayeli.chan@yaguara.mx',
+    role: 'Manager',
+    organization: 'Comercial Yaguará S.A. de C.V.',
+    status: 'Activo',
+    lastAccess: 'hoy, 10:02',
+    initials: 'NC',
+    avatarBg: 'var(--orange)'
+  },
+  {
+    id: 23,
+    name: 'Iván Zamudio',
+    firstName: 'Iván',
+    lastName: 'Zamudio',
+    position: 'Director Comercial',
+    email: 'i.zamudio@rivega.mx',
+    role: 'Manager',
+    organization: 'Recubrimientos Industriales Vega S.A.',
+    status: 'Invitado',
+    lastAccess: 'Pendiente de activación',
+    initials: 'IZ',
+    avatarBg: 'var(--graphite)'
+  },
+  {
+    id: 24,
+    name: 'Lucía Ferrari',
+    firstName: 'Lucía',
+    lastName: 'Ferrari',
+    position: 'Gerente de Tiendas',
+    phone: '+52 33 3615 9042',
+    email: 'lucia.ferrari@trebolhogar.mx',
+    role: 'Manager',
+    organization: 'Almacenes Trébol S.A. de C.V.',
+    status: 'Activo',
+    lastAccess: '2d ago',
+    initials: 'LF',
+    avatarBg: 'var(--accent)'
+  },
+  {
+    id: 25,
+    name: 'Héctor Palomino',
+    firstName: 'Héctor',
+    lastName: 'Palomino',
+    position: 'Director de Operaciones',
+    phone: '+52 222 249 3318',
+    email: 'h.palomino@miralta.mx',
+    role: 'Manager',
+    organization: 'Insumos Constructivos Miralta S.A.',
+    status: 'Activo',
+    lastAccess: 'hoy, 09:31',
+    initials: 'HP',
+    avatarBg: 'var(--storm-deep)'
+  },
+  {
+    id: 26,
+    name: 'Sofía Arriaga',
+    firstName: 'Sofía',
+    lastName: 'Arriaga',
+    position: 'Gerente Comercial',
+    phone: '+52 477 718 6624',
+    email: 'sofia.arriaga@pintubajio.mx',
+    role: 'Manager',
+    organization: 'Pinturas y Solventes del Bajío S.A.',
+    status: 'Activo',
+    lastAccess: '3d ago',
+    initials: 'SA',
+    avatarBg: 'var(--primary)'
+  },
+  {
+    id: 27,
+    name: 'Bruno Sandoval',
+    firstName: 'Bruno',
+    lastName: 'Sandoval',
+    position: 'Director General',
+    phone: '+52 55 5280 7715',
+    email: 'b.sandoval@santamarina.mx',
+    role: 'Manager',
+    organization: 'Corporativo Santamarina S.A. de C.V.',
+    status: 'Activo',
+    lastAccess: 'hoy, 07:58',
+    initials: 'BS',
+    avatarBg: 'var(--info)'
+  },
+  {
+    id: 28,
+    name: 'Verónica Quintanilla',
+    firstName: 'Verónica',
+    lastName: 'Quintanilla',
+    position: 'Gerente de Sucursal',
+    email: 'v.quintanilla@aurora-ac.mx',
+    role: 'Manager',
+    organization: 'Suministros Aurora S.A.',
+    status: 'Invitado',
+    lastAccess: 'Pendiente de activación',
+    initials: 'VQ',
+    avatarBg: 'var(--graphite)'
+  },
+  {
+    id: 29,
+    name: 'Andrés Loera',
+    firstName: 'Andrés',
+    lastName: 'Loera',
+    position: 'Socio Director',
+    phone: '+52 662 213 4408',
+    email: 'a.loera@cimarron.mx',
+    role: 'Manager',
+    organization: 'Grupo Cimarrón S.A. de C.V.',
+    status: 'Activo',
+    lastAccess: '5d ago',
+    initials: 'AL',
+    avatarBg: 'var(--orange)'
+  },
+  {
+    id: 30,
+    name: 'Marisol Tejada',
+    firstName: 'Marisol',
+    lastName: 'Tejada',
+    position: 'Asesora Comercial',
+    phone: '+52 81 8140 2281',
+    email: 'm.tejada@aceval.mx',
+    role: 'Rep',
+    organization: 'Distribuidora Aceval S.A. de C.V.',
+    status: 'Activo',
+    lastAccess: 'hoy, 09:44',
+    initials: 'MT',
+    avatarBg: 'var(--orange)'
+  },
+  {
+    id: 31,
+    name: 'Fermín Oyarzún',
+    firstName: 'Fermín',
+    lastName: 'Oyarzún',
+    position: 'Asesor de Obra',
+    phone: '+52 81 8140 2290',
+    email: 'f.oyarzun@aceval.mx',
+    role: 'Rep',
+    organization: 'Distribuidora Aceval S.A. de C.V.',
+    status: 'Activo',
+    lastAccess: 'ayer, 16:12',
+    initials: 'FO',
+    avatarBg: 'var(--info)'
+  },
+  {
+    id: 32,
+    name: 'Camila Restrepo',
+    firstName: 'Camila',
+    lastName: 'Restrepo',
+    position: 'Ejecutiva de Cuentas',
+    phone: '+52 55 5280 7720',
+    email: 'c.restrepo@santamarina.mx',
+    role: 'Rep',
+    organization: 'Corporativo Santamarina S.A. de C.V.',
+    status: 'Activo',
+    lastAccess: 'hoy, 11:05',
+    initials: 'CR',
+    avatarBg: 'var(--accent)'
+  },
+  {
+    id: 33,
+    name: 'Tomás Ibáñez',
+    firstName: 'Tomás',
+    lastName: 'Ibáñez',
+    position: 'Gerente Regional',
+    phone: '+52 55 5280 7733',
+    email: 't.ibanez@santamarina.mx',
+    role: 'Manager',
+    organization: 'Corporativo Santamarina S.A. de C.V.',
+    status: 'Activo',
+    lastAccess: '2d ago',
+    initials: 'TI',
+    avatarBg: 'var(--primary)'
+  },
+  {
+    id: 34,
+    name: 'Rubén Etchegaray',
+    firstName: 'Rubén',
+    lastName: 'Etchegaray',
+    position: 'Asesor Comercial',
+    email: 'r.etchegaray@trebolhogar.mx',
+    role: 'Rep',
+    organization: 'Almacenes Trébol S.A. de C.V.',
+    status: 'Inactivo',
+    lastAccess: 'hace 3 semanas',
+    initials: 'RE',
+    avatarBg: 'var(--graphite)'
+  }
 ];
 
 export const INITIAL_ORGANIZATIONS: Organization[] = [
@@ -682,6 +909,108 @@ export const INITIAL_ORGANIZATIONS: Organization[] = [
     ownerId: 5, // Pedro Barcellona, ver INITIAL_USERS
     address: 'Torreón, Coahuila',
     createdAt: '2026-06-01'
+  },
+
+  // --- Otras organizaciones de la plataforma. Cada una tiene a propósito un
+  // grado distinto de completitud: algunas con ficha completa, otras recién
+  // dadas de alta con lo mínimo. Sirve para demostrar el panel del Super
+  // Admin sobre datos que se parecen a los reales. ---
+  {
+    id: 2,
+    name: 'Distribuidora Aceval S.A. de C.V.',
+    tradeName: 'Pinturas Aceval',
+    ownerId: 20,
+    taxId: 'DAC120415H21',
+    address: 'Monterrey, Nuevo León',
+    email: 'contacto@aceval.mx',
+    phone: '+52 81 8140 2277',
+    createdAt: '2026-01-19'
+  },
+  {
+    id: 3,
+    name: 'Grupo Ferretero del Norte S.A.',
+    tradeName: 'Ferretería El Ancla',
+    ownerId: 21,
+    address: 'Chihuahua, Chihuahua',
+    email: 'ventas@elancla.mx',
+    phone: '+52 614 415 8890',
+    createdAt: '2026-02-03'
+  },
+  {
+    id: 4,
+    name: 'Comercial Yaguará S.A. de C.V.',
+    tradeName: 'Colores Yaguará',
+    ownerId: 22,
+    taxId: 'CYA180922J44',
+    address: 'Mérida, Yucatán',
+    email: 'hola@yaguara.mx',
+    phone: '+52 999 287 1130',
+    createdAt: '2026-02-27'
+  },
+  {
+    id: 5,
+    name: 'Recubrimientos Industriales Vega S.A.',
+    ownerId: 23,
+    createdAt: '2026-08-11'
+  },
+  {
+    id: 6,
+    name: 'Almacenes Trébol S.A. de C.V.',
+    tradeName: 'Trébol Hogar',
+    ownerId: 24,
+    taxId: 'ATR050716M08',
+    address: 'Guadalajara, Jalisco',
+    email: 'compras@trebolhogar.mx',
+    createdAt: '2026-03-14'
+  },
+  {
+    id: 7,
+    name: 'Insumos Constructivos Miralta S.A.',
+    tradeName: 'Miralta Obra',
+    ownerId: 25,
+    taxId: 'ICM110228K73',
+    address: 'Puebla, Puebla',
+    email: 'contacto@miralta.mx',
+    phone: '+52 222 249 3318',
+    createdAt: '2026-04-02'
+  },
+  {
+    id: 8,
+    name: 'Pinturas y Solventes del Bajío S.A.',
+    tradeName: 'PintuBajío',
+    ownerId: 26,
+    taxId: 'PSB990310B15',
+    address: 'León, Guanajuato',
+    phone: '+52 477 718 6624',
+    createdAt: '2026-04-25'
+  },
+  {
+    id: 9,
+    name: 'Corporativo Santamarina S.A. de C.V.',
+    tradeName: 'Santamarina Decoración',
+    ownerId: 27,
+    taxId: 'CSA021105R60',
+    address: 'Ciudad de México',
+    email: 'recepcion@santamarina.mx',
+    phone: '+52 55 5280 7715',
+    createdAt: '2026-05-08'
+  },
+  {
+    id: 10,
+    name: 'Suministros Aurora S.A.',
+    tradeName: 'Aurora Acabados',
+    ownerId: 28,
+    address: 'Tijuana, Baja California',
+    createdAt: '2026-07-30'
+  },
+  {
+    id: 11,
+    name: 'Grupo Cimarrón S.A. de C.V.',
+    tradeName: 'Cimarrón Pinturas',
+    ownerId: 29,
+    address: 'Hermosillo, Sonora',
+    email: 'info@cimarron.mx',
+    createdAt: '2026-06-17'
   }
 ];
 
