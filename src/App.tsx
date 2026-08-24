@@ -705,7 +705,8 @@ export default function App() {
               onNavigate={handleNavigate}
               onNavigateToLeadsWithoutOpp={handleNavigateToLeadsWithoutOpp}
               onSelectOpportunity={handleSelectOpportunity}
-              organization={isOrgOwner ? currentOrg : undefined}
+              organization={currentOrg}
+              isOrgOwner={isOrgOwner}
             />
           )}
 

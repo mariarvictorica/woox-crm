@@ -28,9 +28,10 @@ interface DashboardViewProps {
   onNavigate?: (view: ViewType) => void;
   onNavigateToLeadsWithoutOpp?: () => void;
   onSelectOpportunity?: (oppId: number) => void;
-  /** Only passed when the viewer owns this organization; absent otherwise,
-   *  which is what keeps the setup notice out of everyone else's Dashboard. */
   organization?: Organization;
+  /** Gates the setup notice: only the Owner can act on those gaps. The logo
+   *  and name in the header show for everyone in the organization. */
+  isOrgOwner?: boolean;
 }
 
 interface TeamActivity {
@@ -216,12 +217,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigate,
   onNavigateToLeadsWithoutOpp,
   onSelectOpportunity,
-  organization
+  organization,
+  isOrgOwner = false
 }) => {
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>('');
   const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
 
-  const orgMissing = useMemo(() => getOrgMissingFields(organization), [organization]);
+  const orgMissing = useMemo(
+    () => (isOrgOwner ? getOrgMissingFields(organization) : []),
+    [organization, isOrgOwner]
+  );
 
   // 1. Process won opportunities grouped by month
   const wonData = useMemo(() => {
@@ -423,9 +428,52 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     <section id="view-dashboard" className="view active manager-dashboard-view">
       {/* 1. Header */}
       <header className="manager-dash-head" id="dash-head">
-        <div className="manager-dash-titles">
-          <h1 id="dash-title">Panel del Manager · Dashboard</h1>
-          <p id="dash-subtitle">Woox Pinturas y Acabados S.A. de C.V. · Enrique Macias</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
+          {organization &&
+            (organization.logoUrl ? (
+              <img
+                id="dash-org-logo"
+                src={organization.logoUrl}
+                alt={organization.name}
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: 'var(--r-md)',
+                  objectFit: 'cover',
+                  flexShrink: 0,
+                  border: '1px solid var(--border)'
+                }}
+              />
+            ) : (
+              // Same initial-on-soft-primary fallback the organization header
+              // uses, so a tenant without a logo still reads as branded.
+              <div
+                id="dash-org-logo"
+                aria-hidden="true"
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: 'var(--r-md)',
+                  background: 'var(--primary-soft)',
+                  color: 'var(--primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  flexShrink: 0
+                }}
+              >
+                {organization.name.trim()[0]?.toUpperCase() || 'O'}
+              </div>
+            ))}
+
+          <div className="manager-dash-titles">
+            <h1 id="dash-title">Panel del Manager · Dashboard</h1>
+            <p id="dash-subtitle">
+              {organization?.name || 'Woox Pinturas y Acabados S.A. de C.V.'} · Enrique Macias
+            </p>
+          </div>
         </div>
       </header>
 
