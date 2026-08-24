@@ -182,8 +182,25 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  /**
+   * The prototype's "view as" control. It switches the person as well as the
+   * panel: each role is a different account, so keeping the previous user
+   * would show, say, the Manager's name over the Super Admin panel — which
+   * is exactly the platform/organization split this prototype has to make
+   * legible. The account per role comes from SIGN_IN_VARIANTS, the same list
+   * the sign-in screens use, so there is one answer to "who is this role".
+   */
   const handleSwitchRole = (role: PlatformRole) => {
-    setSession(prev => (prev ? { ...prev, role } : prev));
+    const account = SIGN_IN_VARIANTS.find(v => v.role === role);
+    const user = account && users.find(u => u.email.toLowerCase() === account.demoEmail.toLowerCase());
+
+    setSession(prev => (prev ? { userId: user ? user.id : prev.userId, role } : prev));
+
+    // Leaving one person's context for another: their open selections mean
+    // nothing here.
+    setSelectedUserDetails(null);
+    setPendingOrgField(null);
+
     // Landing view comes from the option list, so a new panel brings its own
     // and this stays untouched.
     const landing = PLATFORM_VIEW_OPTIONS.find(o => o.value === role)?.landingView;
