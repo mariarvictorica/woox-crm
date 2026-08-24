@@ -5660,18 +5660,6 @@ textarea#lost-modal-reason {
   background: var(--warn-ring-strongest);
 }
 
-.lead-hot-tag {
-  display: inline-flex;
-  align-items: center;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--warn-deep);
-  background: var(--warn-soft);
-  padding: 2px 7px;
-  border-radius: var(--r-xs);
-  border: 1px solid var(--warn-soft-strong);
-  line-height: 1.3;
-}
 .tab-dot.dot-hot {
   background: var(--warn-bright);
   box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
