@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Opportunity, Contact, OppSegment, StageKey } from '../types';
 import { STAGE_CONFIG, STAGE_LABEL, OPEN_STAGES } from '../data/initialData';
 import { UserAvatar } from './UserAvatar';
@@ -9,6 +9,9 @@ interface OpportunitiesViewProps {
   onSelectOpportunity: (oppId: number) => void;
   onSelectLead: (leadId: number) => void;
   onOpenNewOppModal: () => void;
+  /** Arriving from a Dashboard row: land on that stage, rep or segment.
+   *  Mirrors LeadsView's initialFilters so both deep-links work the same way. */
+  initialFilters?: { stage?: StageKey; rep?: string; segment?: OppSegment } | null;
 }
 
 export type OppSortField = 'name' | 'client' | 'rep' | 'last' | 'lastStageChange';
@@ -19,11 +22,15 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
   contacts,
   onSelectOpportunity,
   onSelectLead,
-  onOpenNewOppModal
+  onOpenNewOppModal,
+  initialFilters
 }) => {
-  const [segment, setSegment] = useState<OppSegment>('open');
+  const [segment, setSegment] = useState<OppSegment>(initialFilters?.segment || 'open');
   const [searchTerm, setSearchTerm] = useState('');
-  const [repFilter, setRepFilter] = useState('');
+  const [repFilter, setRepFilter] = useState(initialFilters?.rep || '');
+  // Set from the Dashboard's pipeline rows; cleared as soon as the user picks
+  // a segment, since "Cerradas" and "stage = nuevo" would contradict.
+  const [stageFilter, setStageFilter] = useState<StageKey | null>(initialFilters?.stage || null);
   const [sortField, setSortField] = useState<OppSortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<StageKey, boolean>>({
@@ -67,11 +74,20 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
     return map;
   }, [contacts]);
 
+  useEffect(() => {
+    if (!initialFilters) return;
+    setStageFilter(initialFilters.stage || null);
+    setRepFilter(initialFilters.rep || '');
+    // A stage implies looking at everything, or the segment could hide it.
+    setSegment(initialFilters.segment || (initialFilters.stage ? 'all' : 'open'));
+  }, [initialFilters]);
+
   const filteredOpportunities = useMemo(() => {
     return opportunities.filter(o => {
       if (segment === 'open' && !OPEN_STAGES.includes(o.stage)) return false;
       if (segment === 'closed' && OPEN_STAGES.includes(o.stage)) return false;
 
+      if (stageFilter && o.stage !== stageFilter) return false;
       if (repFilter && o.rep !== repFilter) return false;
 
       if (searchTerm.trim()) {
@@ -83,7 +99,7 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
 
       return true;
     });
-  }, [opportunities, segment, repFilter, searchTerm, contactMap]);
+  }, [opportunities, segment, stageFilter, repFilter, searchTerm, contactMap]);
 
   return (
     <section id="view-opportunities" className="view active">
@@ -112,25 +128,66 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
           <button
             id="seg-opp-open"
             className={segment === 'open' ? 'active' : ''}
-            onClick={() => setSegment('open')}
+            onClick={() => { setSegment('open'); setStageFilter(null); }}
           >
             Abiertas
           </button>
           <button
             id="seg-opp-all"
             className={segment === 'all' ? 'active' : ''}
-            onClick={() => setSegment('all')}
+            onClick={() => { setSegment('all'); setStageFilter(null); }}
           >
             Todas
           </button>
           <button
             id="seg-opp-closed"
             className={segment === 'closed' ? 'active' : ''}
-            onClick={() => setSegment('closed')}
+            onClick={() => { setSegment('closed'); setStageFilter(null); }}
           >
             Cerradas
           </button>
         </div>
+
+      {(stageFilter || repFilter) && (
+        <div
+          id="opps-filter-notice"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px',
+            background: 'var(--warn-surface)',
+            border: '1px solid var(--warn-soft-strong)',
+            borderRadius: '8px',
+            padding: '9px 14px',
+            margin: '12px 0',
+            fontSize: '13px',
+            color: 'var(--warn-ink)'
+          }}
+        >
+          <span>
+            Filtro activo desde el Dashboard:{' '}
+            <b>
+              {[stageFilter && STAGE_LABEL[stageFilter], repFilter].filter(Boolean).join(' · ')}
+            </b>{' '}
+            ({filteredOpportunities.length}{' '}
+            {filteredOpportunities.length === 1 ? 'oportunidad' : 'oportunidades'})
+          </span>
+          <button
+            type="button"
+            id="btn-clear-opps-filter"
+            className="btn btn-ghost btn-sm"
+            onClick={() => {
+              setStageFilter(null);
+              setRepFilter('');
+              setSegment('open');
+            }}
+            style={{ color: 'var(--warn-deep)', background: 'var(--warn-soft)', borderRadius: '4px' }}
+          >
+            Quitar filtro
+          </button>
+        </div>
+      )}
 
         <div className="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

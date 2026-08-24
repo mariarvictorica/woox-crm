@@ -513,6 +513,232 @@ export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * list rather than a pair of hardcoded options, so adding the Rep panel later
  * is one entry here plus its landing view — no change to the control itself.
  */
+/* =============================================================================
+   Date handling and dashboard aggregates.
+
+   parseOpportunityCloseDate was the project's only date parser and lived
+   unexported inside DashboardView, so anything else needing month buckets
+   would have had to rewrite it. Opportunity.close carries both ISO
+   (2026-07-15) and Spanish (30 jul 2026) in the same field, which is why the
+   parser handles both plus a no-date case.
+   ============================================================================= */
+
+export interface ParsedCloseDate {
+  dateObj: Date | null;
+  formattedDate: string;
+  monthKey: string;
+  monthName: string;
+  monthShort: string;
+  timestamp: number;
+}
+
+export const MONTH_NAMES_ES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+export const MONTH_SHORTS_ES = [
+  'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+  'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
+];
+
+export function parseOpportunityCloseDate(closeStr?: string): ParsedCloseDate {
+  if (!closeStr || closeStr === '—' || closeStr === '-') {
+    return {
+      dateObj: null,
+      formattedDate: 'Fecha no especificada',
+      monthKey: '9999-99',
+      monthName: 'Sin fecha',
+      monthShort: 'S/F',
+      timestamp: 0
+    };
+  }
+
+  // 1. Check ISO format YYYY-MM-DD
+  const isoMatch = closeStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const year = parseInt(isoMatch[1], 10);
+    const month = parseInt(isoMatch[2], 10) - 1;
+    const day = parseInt(isoMatch[3], 10);
+    const d = new Date(year, month, day);
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    return {
+      dateObj: d,
+      formattedDate: `${day} de ${MONTH_NAMES_ES[month]} ${year}`,
+      monthKey,
+      monthName: `${MONTH_NAMES_ES[month]} ${year}`,
+      monthShort: `${MONTH_SHORTS_ES[month]} '${String(year).slice(2)}`,
+      timestamp: d.getTime()
+    };
+  }
+
+  // 2. Check Spanish format like "30 jul 2026", "1 ago 2026", "14 ago 2026"
+  const spanishMonths: Record<string, number> = {
+    ene: 0, enero: 0,
+    feb: 1, febrero: 1,
+    mar: 2, marzo: 2,
+    abr: 3, abril: 3,
+    may: 4, mayo: 4,
+    jun: 5, junio: 5,
+    jul: 6, julio: 6,
+    ago: 7, agosto: 7,
+    sep: 8, sept: 8, septiembre: 8,
+    oct: 9, octubre: 9,
+    nov: 10, noviembre: 10,
+    dic: 11, diciembre: 11
+  };
+  const spMatch = closeStr.toLowerCase().match(/(\d{1,2})\s+([a-z]+)\.?\s+(\d{4})/);
+  if (spMatch) {
+    const day = parseInt(spMatch[1], 10);
+    const monthStr = spMatch[2].toLowerCase();
+    const year = parseInt(spMatch[3], 10);
+    const monthIndex = spanishMonths[monthStr] !== undefined ? spanishMonths[monthStr] : 7;
+    const d = new Date(year, monthIndex, day);
+    const monthKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+    return {
+      dateObj: d,
+      formattedDate: `${day} de ${MONTH_NAMES_ES[monthIndex]} ${year}`,
+      monthKey,
+      monthName: `${MONTH_NAMES_ES[monthIndex]} ${year}`,
+      monthShort: `${MONTH_SHORTS_ES[monthIndex]} '${String(year).slice(2)}`,
+      timestamp: d.getTime()
+    };
+  }
+
+  // 3. Fallback standard parse
+  const parsed = Date.parse(closeStr);
+  if (!isNaN(parsed)) {
+    const d = new Date(parsed);
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const day = d.getDate();
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    return {
+      dateObj: d,
+      formattedDate: `${day} de ${MONTH_NAMES_ES[month]} ${year}`,
+      monthKey,
+      monthName: `${MONTH_NAMES_ES[month]} ${year}`,
+      monthShort: `${MONTH_SHORTS_ES[month]} '${String(year).slice(2)}`,
+      timestamp: d.getTime()
+    };
+  }
+
+  return {
+    dateObj: null,
+    formattedDate: closeStr,
+    monthKey: '9999-99',
+    monthName: 'Sin fecha',
+    monthShort: 'S/F',
+    timestamp: 0
+  };
+}
+
+/** Month key ('YYYY-MM') for an ISO date, or null when unparseable. */
+export function isoMonthKey(iso?: string): string | null {
+  if (!iso) return null;
+  const m = iso.match(/^(\d{4})-(\d{2})/);
+  return m ? `${m[1]}-${m[2]}` : null;
+}
+
+/** The month keys of the most recent month present in `keys`, and the one
+ *  before it. Derived from the data rather than from today's date: the seed's
+ *  latest activity is not necessarily the current month, and a dashboard that
+ *  assumed "now" would show an empty current period. */
+export function latestTwoMonths(keys: string[]): { current: string | null; previous: string | null } {
+  const real = Array.from(new Set(keys.filter(k => k && k !== '9999-99'))).sort();
+  return {
+    current: real.length ? real[real.length - 1] : null,
+    previous: real.length > 1 ? real[real.length - 2] : null
+  };
+}
+
+export interface Delta {
+  pct: number;
+  direction: 'up' | 'down' | 'flat';
+}
+
+/** Percentage change, or null when there is no prior period to compare
+ *  against. Null is meaningful here: the KPI says so instead of showing a
+ *  dash that reads like zero. */
+export function computeDelta(current: number, previous: number | null | undefined): Delta | null {
+  if (previous === null || previous === undefined) return null;
+  if (previous === 0) return current === 0 ? { pct: 0, direction: 'flat' } : null;
+  const pct = Math.round(((current - previous) / previous) * 100);
+  return { pct, direction: pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat' };
+}
+
+export interface StageBreakdown {
+  key: StageKey;
+  label: string;
+  color: string;
+  count: number;
+  value: number;
+}
+
+/** Count and monetary value per pipeline stage. The value was already being
+ *  computed in the dashboard and thrown away. */
+export function getStageBreakdown(opportunities: Opportunity[]): StageBreakdown[] {
+  return STAGE_CONFIG.map(cfg => {
+    const inStage = opportunities.filter(o => o.stage === cfg.key);
+    return {
+      key: cfg.key,
+      label: cfg.label,
+      color: cfg.color,
+      count: inStage.length,
+      value: inStage.reduce((sum, o) => sum + (o.value || 0), 0)
+    };
+  });
+}
+
+export interface RepPerformance {
+  name: string;
+  openCount: number;
+  openValue: number;
+  wonCount: number;
+  wonValue: number;
+  lostCount: number;
+  /** Null when the rep has closed nothing — a rate over zero deals is noise. */
+  winRate: number | null;
+}
+
+/** Per-representative rollup. Opportunity.rep holds a name string rather than
+ *  a user id, so this joins on name; reps with no opportunities at all still
+ *  appear, since "no pipeline" is the signal worth surfacing. */
+export function getRepPerformance(opportunities: Opportunity[], repNames: string[]): RepPerformance[] {
+  return repNames
+    .map(name => {
+      const mine = opportunities.filter(o => o.rep === name);
+      const open = mine.filter(o => OPEN_STAGES.includes(o.stage));
+      const won = mine.filter(o => o.stage === 'ganado');
+      const lost = mine.filter(o => o.stage === 'perdido');
+      const closed = won.length + lost.length;
+      return {
+        name,
+        openCount: open.length,
+        openValue: open.reduce((s, o) => s + (o.value || 0), 0),
+        wonCount: won.length,
+        wonValue: won.reduce((s, o) => s + (o.value || 0), 0),
+        lostCount: lost.length,
+        winRate: closed > 0 ? Math.round((won.length / closed) * 100) : null
+      };
+    })
+    .sort((a, b) => b.openValue - a.openValue || b.wonValue - a.wonValue);
+}
+
+/** Contacts with no opportunity in an open stage. */
+export function getContactsWithoutOpenOpp(contacts: Contact[], opportunities: Opportunity[]): Contact[] {
+  const withOpen = new Set(
+    opportunities.filter(o => OPEN_STAGES.includes(o.stage)).map(o => o.contactId)
+  );
+  return contacts.filter(c => !withOpen.has(c.id));
+}
+
+/** Contacts untouched for at least `days`. Uses daysInactive, the only
+ *  numeric time field in the model — `last` is display text ('9d ago'). */
+export function getStaleContacts(contacts: Contact[], days: number): Contact[] {
+  return contacts.filter(c => (c.daysInactive ?? 0) >= days);
+}
+
 export const PLATFORM_VIEW_OPTIONS: { value: PlatformRole; label: string; landingView: ViewType }[] = [
   { value: 'manager', label: 'Manager', landingView: 'dashboard' },
   { value: 'rep', label: 'Representante de Ventas', landingView: 'dashboard' },

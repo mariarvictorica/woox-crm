@@ -9,222 +9,77 @@ import {
   CartesianGrid,
   Cell
 } from 'recharts';
-import { Opportunity, ActivityEvent, Contact, ViewType, StageKey, Organization } from '../types';
+import { Opportunity, ActivityEvent, Contact, ViewType, Organization, LeadFilterState } from '../types';
 import {
-  STAGE_LABEL,
   EMPLOYEE_PROFILES,
   formatMoney,
   OPEN_STAGES,
   ORG_PROFILE_FIELDS,
-  getOrgMissingFields
+  getOrgMissingFields,
+  parseOpportunityCloseDate,
+  MONTH_NAMES_ES,
+  isoMonthKey,
+  latestTwoMonths,
+  computeDelta,
+  getStageBreakdown,
+  getRepPerformance,
+  getContactsWithoutOpenOpp,
+  getStaleContacts
 } from '../data/initialData';
 import type { OrgProfileFieldKey } from '../data/initialData';
-import { OrgProfileChecklistBanner } from './OrgProfileChecklistBanner';
 import { UserAvatar } from './UserAvatar';
+import { OrgProfileChecklistBanner } from './OrgProfileChecklistBanner';
+import { DashboardAttentionPanel, AttentionItem } from './DashboardAttentionPanel';
+import { TeamPerformancePanel } from './TeamPerformancePanel';
+
+/** Contacts untouched for this many days count as needing follow-up. */
+const STALE_CONTACT_DAYS = 7;
 
 interface DashboardViewProps {
   contacts?: Contact[];
   opportunities: Opportunity[];
+  /** Real activity feed. App pushes an event on every meaningful action, so
+   *  this reflects what happens during a session. */
   activities?: ActivityEvent[];
+  /** Members of the signed-in user's organization, for the team rollup. */
+  orgUsers?: { name: string; role: string }[];
   onNavigate?: (view: ViewType) => void;
-  onNavigateToLeadsWithoutOpp?: () => void;
+  onNavigateToLeads?: (filters: Partial<LeadFilterState>) => void;
+  onNavigateToOpportunities?: (filters: { stage?: string; rep?: string; segment?: string }) => void;
   onSelectOpportunity?: (oppId: number) => void;
   organization?: Organization;
-  /** Who is signed in, for the header line. */
   currentUserName?: string;
-  /** Gates the setup notice: only the Owner can act on those gaps. The logo
-   *  and name in the header show for everyone in the organization. */
+  /** Gates the setup item: only the Owner can act on those gaps. The logo and
+   *  name in the header show for everyone in the organization. */
   isOrgOwner?: boolean;
-  /** Go to "Mi organización", optionally landing on one specific field. */
+  /** False for a sales rep: no team comparison, no organization-wide numbers,
+   *  and their figures scoped to their own opportunities. */
+  canSeeTeam?: boolean;
   onCompleteOrgProfile?: (field?: OrgProfileFieldKey) => void;
 }
 
-interface TeamActivity {
-  id: string;
-  repName: string;
-  repInitials: string;
-  repAvatarUrl?: string;
-  actionText: string;
-  targetEntity: string;
-  timestamp: string;
-}
-
-const DEFAULT_TEAM_ACTIVITIES: TeamActivity[] = [
-  {
-    id: 'act-1',
-    repName: 'Diego',
-    repInitials: 'D',
-    repAvatarUrl: EMPLOYEE_PROFILES['Diego']?.avatarUrl,
-    actionText: 'movió la oportunidad',
-    targetEntity: 'Acabado exterior — 3 terrazas a Negociación',
-    timestamp: 'hace 12 min'
-  },
-  {
-    id: 'act-2',
-    repName: 'Maria Torres',
-    repInitials: 'M',
-    repAvatarUrl: EMPLOYEE_PROFILES['Maria Torres']?.avatarUrl,
-    actionText: 'registró una nota en',
-    targetEntity: 'Contratista García (Landeros Arquitectura)',
-    timestamp: 'hace 28 min'
-  },
-  {
-    id: 'act-3',
-    repName: 'Adamaris',
-    repInitials: 'A',
-    repAvatarUrl: EMPLOYEE_PROFILES['Adamaris']?.avatarUrl,
-    actionText: 'subió un archivo a',
-    targetEntity: 'Proyecto fachada residencial (Ficha_Tecnica.pdf)',
-    timestamp: 'hace 1 h'
-  },
-  {
-    id: 'act-4',
-    repName: 'Diego',
-    repInitials: 'D',
-    repAvatarUrl: EMPLOYEE_PROFILES['Diego']?.avatarUrl,
-    actionText: 'creó un contacto desde',
-    targetEntity: 'Online (WhatsApp) · Ing. Carlos Mendoza',
-    timestamp: 'hace 2 h'
-  },
-  {
-    id: 'act-5',
-    repName: 'Adamaris',
-    repInitials: 'A',
-    repAvatarUrl: EMPLOYEE_PROFILES['Adamaris']?.avatarUrl,
-    actionText: 'movió la oportunidad',
-    targetEntity: 'Compra mostrador retail a Ganado',
-    timestamp: 'hace 3 h'
-  },
-  {
-    id: 'act-6',
-    repName: 'Pedro Barcellona',
-    repInitials: 'EM',
-    repAvatarUrl: EMPLOYEE_PROFILES['Pedro Barcellona']?.avatarUrl,
-    actionText: 'reasignó 3 contactos a',
-    targetEntity: 'Maria Torres · Zona Hotelera Cancún',
-    timestamp: 'hace 4 h'
-  }
-];
-
-interface ParsedCloseDate {
-  dateObj: Date | null;
-  formattedDate: string;
-  monthKey: string;
-  monthName: string;
-  monthShort: string;
-  timestamp: number;
-}
-
-const MONTH_NAMES_ES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-];
-
-const MONTH_SHORTS_ES = [
-  'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-  'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'
-];
-
-function parseOpportunityCloseDate(closeStr?: string): ParsedCloseDate {
-  if (!closeStr || closeStr === '—' || closeStr === '-') {
-    return {
-      dateObj: null,
-      formattedDate: 'Fecha no especificada',
-      monthKey: '9999-99',
-      monthName: 'Sin fecha',
-      monthShort: 'S/F',
-      timestamp: 0
-    };
-  }
-
-  // 1. Check ISO format YYYY-MM-DD
-  const isoMatch = closeStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (isoMatch) {
-    const year = parseInt(isoMatch[1], 10);
-    const month = parseInt(isoMatch[2], 10) - 1;
-    const day = parseInt(isoMatch[3], 10);
-    const d = new Date(year, month, day);
-    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-    return {
-      dateObj: d,
-      formattedDate: `${day} de ${MONTH_NAMES_ES[month]} ${year}`,
-      monthKey,
-      monthName: `${MONTH_NAMES_ES[month]} ${year}`,
-      monthShort: `${MONTH_SHORTS_ES[month]} '${String(year).slice(2)}`,
-      timestamp: d.getTime()
-    };
-  }
-
-  // 2. Check Spanish format like "30 jul 2026", "1 ago 2026", "14 ago 2026"
-  const spanishMonths: Record<string, number> = {
-    ene: 0, enero: 0,
-    feb: 1, febrero: 1,
-    mar: 2, marzo: 2,
-    abr: 3, abril: 3,
-    may: 4, mayo: 4,
-    jun: 5, junio: 5,
-    jul: 6, julio: 6,
-    ago: 7, agosto: 7,
-    sep: 8, sept: 8, septiembre: 8,
-    oct: 9, octubre: 9,
-    nov: 10, noviembre: 10,
-    dic: 11, diciembre: 11
-  };
-  const spMatch = closeStr.toLowerCase().match(/(\d{1,2})\s+([a-z]+)\.?\s+(\d{4})/);
-  if (spMatch) {
-    const day = parseInt(spMatch[1], 10);
-    const monthStr = spMatch[2].toLowerCase();
-    const year = parseInt(spMatch[3], 10);
-    const monthIndex = spanishMonths[monthStr] !== undefined ? spanishMonths[monthStr] : 7;
-    const d = new Date(year, monthIndex, day);
-    const monthKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
-    return {
-      dateObj: d,
-      formattedDate: `${day} de ${MONTH_NAMES_ES[monthIndex]} ${year}`,
-      monthKey,
-      monthName: `${MONTH_NAMES_ES[monthIndex]} ${year}`,
-      monthShort: `${MONTH_SHORTS_ES[monthIndex]} '${String(year).slice(2)}`,
-      timestamp: d.getTime()
-    };
-  }
-
-  // 3. Fallback standard parse
-  const parsed = Date.parse(closeStr);
-  if (!isNaN(parsed)) {
-    const d = new Date(parsed);
-    const year = d.getFullYear();
-    const month = d.getMonth();
-    const day = d.getDate();
-    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-    return {
-      dateObj: d,
-      formattedDate: `${day} de ${MONTH_NAMES_ES[month]} ${year}`,
-      monthKey,
-      monthName: `${MONTH_NAMES_ES[month]} ${year}`,
-      monthShort: `${MONTH_SHORTS_ES[month]} '${String(year).slice(2)}`,
-      timestamp: d.getTime()
-    };
-  }
-
-  return {
-    dateObj: null,
-    formattedDate: closeStr,
-    monthKey: '9999-99',
-    monthName: 'Sin fecha',
-    monthShort: 'S/F',
-    timestamp: 0
-  };
-}
-
+/**
+ * The Manager's control centre, and — with canSeeTeam off — the rep's own.
+ *
+ * Ordered by what gets answered first: what needs doing, then how the
+ * organization is doing, then sales detail, then the team, then what just
+ * happened. Every number here is derived; the previous version invented the
+ * bottom half of the page in the component and left three of six blocks with
+ * nowhere to click.
+ */
 export const DashboardView: React.FC<DashboardViewProps> = ({
   contacts = [],
   opportunities,
+  activities = [],
+  orgUsers = [],
   onNavigate,
-  onNavigateToLeadsWithoutOpp,
+  onNavigateToLeads,
+  onNavigateToOpportunities,
   onSelectOpportunity,
   organization,
   currentUserName,
   isOrgOwner = false,
+  canSeeTeam = false,
   onCompleteOrgProfile
 }) => {
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>('');
@@ -235,7 +90,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     [organization, isOrgOwner]
   );
 
-  // 1. Process won opportunities grouped by month
+  // A rep sees their own book; a manager sees the organization's.
+  const scopedOpps = useMemo(
+    () => (canSeeTeam ? opportunities : opportunities.filter(o => o.rep === currentUserName)),
+    [opportunities, canSeeTeam, currentUserName]
+  );
+
   const wonData = useMemo(() => {
     const wonOpps = opportunities.filter(o => o.stage === 'ganado');
 
@@ -369,67 +229,150 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [wonData, currentMonthKey]);
 
   // 1. Metric Computations
-  const openOpps = opportunities.filter(o => OPEN_STAGES.includes(o.stage));
-  
-  const contactIdsWithActiveOpp = new Set(
-    opportunities
-      .filter(o => OPEN_STAGES.includes(o.stage))
-      .map(o => o.contactId)
-  );
-  const leadsWithoutActiveOpp = contacts.length > 0
-    ? contacts.filter(c => !contactIdsWithActiveOpp.has(c.id)).length
-    : 4;
+  // ---- Derived metrics. Every one of these comes from the data; where a
+  // comparison isn't possible the KPI says so rather than showing a dash.
 
-  // 2. Stage Breakdown Computations
-  const allStages: StageKey[] = ['nuevo', 'contactado', 'calificado', 'negociacion', 'ganado', 'perdido'];
-  
-  const stageStats = allStages.map(stageKey => {
-    const oppsInStage = opportunities.filter(o => o.stage === stageKey);
-    const count = oppsInStage.length;
-    const value = oppsInStage.reduce((sum, o) => sum + (o.value || 0), 0);
+  const openOpps = useMemo(() => scopedOpps.filter(o => OPEN_STAGES.includes(o.stage)), [scopedOpps]);
+  const openValue = useMemo(() => openOpps.reduce((s, o) => s + (o.value || 0), 0), [openOpps]);
+
+  const stageBreakdown = useMemo(() => getStageBreakdown(scopedOpps), [scopedOpps]);
+  const maxStageCount = Math.max(...stageBreakdown.map(s => s.count), 1);
+  const activeStages = stageBreakdown.filter(s => OPEN_STAGES.includes(s.key));
+  const closedStages = stageBreakdown.filter(s => !OPEN_STAGES.includes(s.key));
+
+  /** Won amount for the latest month with data, and the change against the
+   *  month before it. Anchored to the data, not to today. */
+  const wonTrend = useMemo(() => {
+    const byMonth = new Map<string, { amount: number; count: number }>();
+    scopedOpps
+      .filter(o => o.stage === 'ganado')
+      .forEach(o => {
+        const key = parseOpportunityCloseDate(o.close).monthKey;
+        const entry = byMonth.get(key) || { amount: 0, count: 0 };
+        entry.amount += o.value || 0;
+        entry.count += 1;
+        byMonth.set(key, entry);
+      });
+    const { current, previous } = latestTwoMonths([...byMonth.keys()]);
+    const cur = current ? byMonth.get(current) : undefined;
+    const prev = previous ? byMonth.get(previous) : undefined;
+    const monthIndex = current ? parseInt(current.slice(5), 10) - 1 : -1;
     return {
-      key: stageKey,
-      label: STAGE_LABEL[stageKey],
-      count,
-      value
+      monthLabel: monthIndex >= 0 ? MONTH_NAMES_ES[monthIndex] : null,
+      previousLabel: previous ? MONTH_NAMES_ES[parseInt(previous.slice(5), 10) - 1] : null,
+      amount: cur?.amount ?? 0,
+      count: cur?.count ?? 0,
+      delta: computeDelta(cur?.amount ?? 0, prev?.amount)
     };
-  });
+  }, [scopedOpps]);
 
-  const maxStageCount = Math.max(...stageStats.map(s => s.count), 1);
-  const activeStageStats = stageStats.filter(s => ['nuevo', 'contactado', 'calificado', 'negociacion'].includes(s.key));
-  const closedStageStats = stageStats.filter(s => ['ganado', 'perdido'].includes(s.key));
+  /** Closed-deal win rate. Global only: the seed's single lost opportunity has
+   *  no close date, so there is no monthly denominator to trend against. */
+  const winRate = useMemo(() => {
+    const won = scopedOpps.filter(o => o.stage === 'ganado').length;
+    const lost = scopedOpps.filter(o => o.stage === 'perdido').length;
+    const closed = won + lost;
+    return { pct: closed ? Math.round((won / closed) * 100) : null, won, closed };
+  }, [scopedOpps]);
 
-  // 3. New Leads Today Breakdown
-  const totalTodayLeads = 12;
-  const todayBreakdown = [
-    {
-      id: 'online',
-      name: 'Online',
-      tag: 'Prioridad 1',
-      description: 'WhatsApp, Instagram, Facebook',
-      count: 7,
-      pct: 58,
-      fillClass: 'online'
-    },
-    {
-      id: 'b2b',
-      name: 'B2B',
-      tag: 'Prioridad 2',
-      description: 'Constructoras, arquitectos, empresas',
-      count: 3,
-      pct: 25,
-      fillClass: 'b2b'
-    },
-    {
-      id: 'retail',
-      name: 'Retail',
-      tag: 'Prioridad 3',
-      description: 'Mostrador y particulares',
-      count: 2,
-      pct: 17,
-      fillClass: 'retail'
+  /** New contacts for the latest month present in the data, vs the one before.
+   *  createdAt is clean ISO, so this comparison is real. */
+  const contactTrend = useMemo(() => {
+    const byMonth = new Map<string, number>();
+    contacts.forEach(c => {
+      const key = isoMonthKey(c.createdAt);
+      if (key) byMonth.set(key, (byMonth.get(key) || 0) + 1);
+    });
+    const { current, previous } = latestTwoMonths([...byMonth.keys()]);
+    const monthIndex = current ? parseInt(current.slice(5), 10) - 1 : -1;
+    return {
+      monthLabel: monthIndex >= 0 ? MONTH_NAMES_ES[monthIndex] : null,
+      previousLabel: previous ? MONTH_NAMES_ES[parseInt(previous.slice(5), 10) - 1] : null,
+      count: current ? byMonth.get(current) || 0 : 0,
+      delta: computeDelta(current ? byMonth.get(current) || 0 : 0, previous ? byMonth.get(previous) : undefined)
+    };
+  }, [contacts]);
+
+  const repPerformance = useMemo(() => {
+    const repNames = orgUsers.filter(u => u.role === 'Rep').map(u => u.name);
+    return getRepPerformance(opportunities, repNames);
+  }, [opportunities, orgUsers]);
+
+  // ---- Attention queue. Only non-zero items reach the panel.
+  const attentionItems = useMemo<AttentionItem[]>(() => {
+    if (!canSeeTeam) return [];
+
+    const withoutOpen = getContactsWithoutOpenOpp(contacts, opportunities);
+    const hotWithoutOpen = withoutOpen.filter(c => c.hot);
+    const stale = getStaleContacts(contacts, STALE_CONTACT_DAYS);
+
+    const items: AttentionItem[] = [];
+
+    if (hotWithoutOpen.length > 0) {
+      items.push({
+        key: 'hot-no-opp',
+        count: hotWithoutOpen.length,
+        label: 'Contactos prioritarios sin oportunidad',
+        detail: hotWithoutOpen.slice(0, 2).map(c => c.name).join(', '),
+        ctaLabel: 'Revisar',
+        urgent: true,
+        onAction: () => onNavigateToLeads?.({ priority: 'hot', opportunity: 'without_opp' })
+      });
     }
-  ];
+
+    if (withoutOpen.length > 0) {
+      items.push({
+        key: 'no-opp',
+        count: withoutOpen.length,
+        label: 'Contactos sin oportunidad activa',
+        detail: 'Nadie les abrió una oportunidad todavía',
+        ctaLabel: 'Ver lista',
+        onAction: () => onNavigateToLeads?.({ opportunity: 'without_opp' })
+      });
+    }
+
+    if (stale.length > 0) {
+      items.push({
+        key: 'stale',
+        count: stale.length,
+        label: `Contactos sin actividad hace más de ${STALE_CONTACT_DAYS} días`,
+        detail: 'El más antiguo, ' + Math.max(...stale.map(c => c.daysInactive ?? 0)) + ' días',
+        ctaLabel: 'Ver lista',
+        onAction: () => onNavigateToLeads?.({ activity: '7days' })
+      });
+    }
+
+    return items;
+  }, [canSeeTeam, contacts, opportunities, onNavigateToLeads]);
+
+  const goToOpportunities = (filters: { stage?: string; rep?: string; segment?: string } = {}) => {
+    if (onNavigateToOpportunities) onNavigateToOpportunities(filters);
+    else onNavigate?.('opportunities');
+  };
+
+  const renderDelta = (
+    delta: ReturnType<typeof computeDelta>,
+    previousLabel: string | null,
+    fallback: string
+  ) => {
+    if (!delta) return <div className="kpi-delta none">{fallback}</div>;
+    const sign = delta.direction === 'up' ? '+' : '';
+    return (
+      <div className={`kpi-delta ${delta.direction}`}>
+        {delta.direction !== 'flat' && (
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            {delta.direction === 'up' ? (
+              <polyline points="6 15 12 9 18 15" />
+            ) : (
+              <polyline points="6 9 12 15 18 9" />
+            )}
+          </svg>
+        )}
+        {sign}
+        {delta.pct}% {previousLabel ? `vs ${previousLabel.toLowerCase()}` : ''}
+      </div>
+    );
+  };
 
   return (
     <section id="view-dashboard" className="view active manager-dashboard-view">
@@ -484,6 +427,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </header>
 
+      {/* 2. Lo primero: qué requiere acción.
+
+          El aviso de perfil de organización queda como bloque propio debajo, y
+          no como una fila más de la cola: su barra de progreso y sus atajos por
+          campo dicen más que un conteo, y son una tarea de configuración, no un
+          seguimiento comercial. Ordenados uno tras otro, la jerarquía es clara
+          sin que compitan por el mismo lugar. */}
+      {canSeeTeam && <DashboardAttentionPanel items={attentionItems} />}
+
       {orgMissing.length > 0 && (
         <OrgProfileChecklistBanner
           missing={orgMissing}
@@ -492,58 +444,100 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         />
       )}
 
-      {/* 2. Tarjetas Métricas: Contactos sin oportunidad activa & Oportunidades activas */}
-      <div className="manager-kpi-grid" id="dash-kpis" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-        {/* Card 1: Contactos sin oportunidad activa (Amber Highlight / Action Metric) */}
+      {/* 3. La organización de un vistazo */}
+      <div className="manager-kpi-grid" id="dash-kpis">
         <div
-          className="manager-kpi-card kpi-warning clickable"
-          id="kpi-leads-no-opp"
+          className="manager-kpi-card clickable"
+          id="kpi-open-pipeline"
           role="button"
           tabIndex={0}
-          onClick={() => {
-            if (onNavigateToLeadsWithoutOpp) {
-              onNavigateToLeadsWithoutOpp();
-            } else {
-              onNavigate?.('leads');
-            }
-          }}
-          onKeyDown={(e) => {
+          onClick={() => goToOpportunities({ segment: 'open' })}
+          onKeyDown={e => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              if (onNavigateToLeadsWithoutOpp) {
-                onNavigateToLeadsWithoutOpp();
-              } else {
-                onNavigate?.('leads');
-              }
+              goToOpportunities({ segment: 'open' });
             }
           }}
-          title="Hacer clic para ver la lista de contactos sin oportunidad activa"
+          title="Ver las oportunidades abiertas"
         >
-          <div className="kpi-label">Contactos sin oportunidad activa</div>
-          <div className="kpi-value">{leadsWithoutActiveOpp}</div>
-          <div className="kpi-action-tag">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-            Acción requerida · Ver lista &rarr;
+          <div className="kpi-label">{canSeeTeam ? 'Pipeline abierto' : 'Mi pipeline abierto'}</div>
+          <div className="kpi-value">{formatMoney(openValue)}</div>
+          <div className="kpi-sub">
+            {openOpps.length} {openOpps.length === 1 ? 'oportunidad' : 'oportunidades'} en curso
           </div>
         </div>
 
-        {/* Card 2: Oportunidades activas */}
         <div
           className="manager-kpi-card clickable"
-          id="kpi-open-opps"
+          id="kpi-won-month"
           role="button"
           tabIndex={0}
-          onClick={() => onNavigate?.('opportunities')}
-          title="Ver pipeline de oportunidades activas"
+          onClick={() => goToOpportunities({ segment: 'closed' })}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              goToOpportunities({ segment: 'closed' });
+            }
+          }}
+          title="Ver las oportunidades cerradas"
         >
-          <div className="kpi-label">Oportunidades activas</div>
-          <div className="kpi-value">{openOpps.length}</div>
-          <div className="kpi-sub">En etapas de Nuevo, Contactado, Calificado y Negociación</div>
+          <div className="kpi-label">
+            Ganado en {wonTrend.monthLabel ? wonTrend.monthLabel.toLowerCase() : 'el período'}
+          </div>
+          <div className="kpi-value">{formatMoney(wonTrend.amount)}</div>
+          <div className="kpi-sub">
+            {wonTrend.count} {wonTrend.count === 1 ? 'acuerdo' : 'acuerdos'}
+          </div>
+          {renderDelta(wonTrend.delta, wonTrend.previousLabel, 'Sin mes anterior para comparar')}
         </div>
+
+        <div
+          className="manager-kpi-card clickable"
+          id="kpi-win-rate"
+          role="button"
+          tabIndex={0}
+          onClick={() => goToOpportunities({ segment: 'closed' })}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              goToOpportunities({ segment: 'closed' });
+            }
+          }}
+          title="Ver las oportunidades cerradas"
+        >
+          <div className="kpi-label">Tasa de cierre</div>
+          <div className="kpi-value">{winRate.pct === null ? '—' : `${winRate.pct}%`}</div>
+          <div className="kpi-sub">
+            {winRate.won} de {winRate.closed} cerradas
+          </div>
+          {/* Stated, not dashed: the lost opportunity has no close date, so
+              there is no per-month denominator to trend against. */}
+          <div className="kpi-delta none">Acumulado histórico</div>
+        </div>
+
+        {canSeeTeam && (
+          <div
+            className="manager-kpi-card clickable"
+            id="kpi-new-contacts"
+            role="button"
+            tabIndex={0}
+            onClick={() => onNavigate?.('leads')}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onNavigate?.('leads');
+              }
+            }}
+            title="Ver todos los contactos"
+          >
+            <div className="kpi-label">
+              Contactos nuevos en {contactTrend.monthLabel ? contactTrend.monthLabel.toLowerCase() : 'el período'}
+            </div>
+            <div className="kpi-value">{contactTrend.count}</div>
+            <div className="kpi-sub">{contacts.length} en total</div>
+            {renderDelta(contactTrend.delta, contactTrend.previousLabel, 'Sin mes anterior para comparar')}
+          </div>
+        )}
       </div>
 
       {/* 3. Sección: Diagrama de Barras de Oportunidades Ganadas por Mes con sus Fechas */}
@@ -737,142 +731,131 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
-
-      {/* 3. Row of 2 Columns */}
-      <div className="manager-two-col" id="dash-two-col" style={{ marginTop: '20px' }}>
-        {/* Wide Left Column: Pipeline por etapa */}
+      {/* 5. Pipeline por etapa — cada fila es un filtro */}
+      <div className="manager-two-col" id="dash-two-col">
         <div className="manager-card" id="card-pipeline-stages">
           <div className="manager-card-head">
             <h3>Pipeline por etapa</h3>
-            <span className="head-meta">6 etapas · {opportunities.length} oportunidades totales</span>
+            <span className="head-meta">
+              {stageBreakdown.length} etapas &middot; {scopedOpps.length} oportunidades
+            </span>
           </div>
 
           <div className="stage-pipeline-list" id="pipeline-stage-list">
-            {/* Active Stages */}
-            {activeStageStats.map(stage => {
-              const widthPct = Math.max(Math.round((stage.count / maxStageCount) * 100), stage.count > 0 ? 8 : 2);
-              return (
-                <div className="stage-item-row" key={stage.key} id={`stage-row-${stage.key}`}>
-                  <div className="stage-item-info">
-                    <div className="stage-name-wrap">
-                      <span className="stage-name">{stage.label}</span>
-                    </div>
-                    <div className="stage-counts">
-                      <span className="stage-opps-badge">{stage.count} {stage.count === 1 ? 'oportunidad' : 'oportunidades'}</span>
-                    </div>
+            {activeStages.map(stage => (
+              <button
+                type="button"
+                className="stage-item-row clickable"
+                key={stage.key}
+                id={`stage-row-${stage.key}`}
+                onClick={() => goToOpportunities({ stage: stage.key })}
+                title={`Ver las oportunidades en ${stage.label}`}
+              >
+                <div className="stage-item-info">
+                  <div className="stage-name-wrap">
+                    <span className="stage-name">{stage.label}</span>
                   </div>
-                  <div className="stage-track">
-                    <div
-                      className="stage-fill"
-                      style={{ width: `${widthPct}%` }}
-                    />
+                  <div className="stage-counts">
+                    {/* The monetary value was computed and discarded before. */}
+                    <span className="stage-row-value">{formatMoney(stage.value)}</span>
+                    <span className="stage-opps-badge">
+                      {stage.count} {stage.count === 1 ? 'oportunidad' : 'oportunidades'}
+                    </span>
                   </div>
                 </div>
-              );
-            })}
+                <div className="stage-track">
+                  <div
+                    className="stage-fill"
+                    style={{
+                      width: `${Math.max(Math.round((stage.count / maxStageCount) * 100), stage.count > 0 ? 8 : 2)}%`,
+                      background: stage.color
+                    }}
+                  />
+                </div>
+              </button>
+            ))}
 
-            {/* Separator for Ganado & Perdido */}
             <div className="stage-divider" />
 
-            {/* Closed Stages */}
-            {closedStageStats.map(stage => {
-              const isWon = stage.key === 'ganado';
-              const widthPct = Math.max(Math.round((stage.count / maxStageCount) * 100), stage.count > 0 ? 8 : 2);
-              return (
-                <div className="stage-item-row" key={stage.key} id={`stage-row-${stage.key}`}>
-                  <div className="stage-item-info">
-                    <div className="stage-name-wrap">
-                      <span className="stage-name" style={{ color: isWon ? 'var(--good)' : 'var(--graphite)' }}>
-                        {stage.label}
-                      </span>
-                    </div>
-                    <div className="stage-counts">
-                      <span
-                        className="stage-opps-badge"
-                        style={{ color: isWon ? 'var(--good)' : 'var(--graphite)' }}
-                      >
-                        {stage.count} {stage.count === 1 ? 'oportunidad' : 'oportunidades'}
-                      </span>
-                    </div>
+            {closedStages.map(stage => (
+              <button
+                type="button"
+                className="stage-item-row clickable"
+                key={stage.key}
+                id={`stage-row-${stage.key}`}
+                onClick={() => goToOpportunities({ stage: stage.key })}
+                title={`Ver las oportunidades en ${stage.label}`}
+              >
+                <div className="stage-item-info">
+                  <div className="stage-name-wrap">
+                    <span className="stage-name" style={{ color: stage.color }}>
+                      {stage.label}
+                    </span>
                   </div>
-                  <div className="stage-track">
-                    <div
-                      className={`stage-fill ${isWon ? 'won' : 'lost'}`}
-                      style={{ width: `${widthPct}%` }}
-                    />
+                  <div className="stage-counts">
+                    <span className="stage-row-value">{formatMoney(stage.value)}</span>
+                    <span className="stage-opps-badge">
+                      {stage.count} {stage.count === 1 ? 'oportunidad' : 'oportunidades'}
+                    </span>
                   </div>
                 </div>
-              );
-            })}
+                <div className="stage-track">
+                  <div
+                    className={`stage-fill ${stage.key === 'ganado' ? 'won' : 'lost'}`}
+                    style={{
+                      width: `${Math.max(Math.round((stage.count / maxStageCount) * 100), stage.count > 0 ? 8 : 2)}%`
+                    }}
+                  />
+                </div>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Narrow Right Column: Nuevos contactos de hoy */}
-        <div className="manager-card" id="card-leads-today">
-          <div className="manager-card-head">
-            <h3>Nuevos contactos de hoy</h3>
-            <span className="head-meta">Por canal de origen</span>
-          </div>
-
-          <div className="today-leads-box">
-            {/* Desglose en Orden Exacto: Online, B2B, Retail */}
-            <div className="origin-priority-list" id="origin-priority-breakdown">
-              {todayBreakdown.map(origin => (
-                <div className="origin-item-row" key={origin.id} id={`origin-row-${origin.id}`}>
-                  <div className="origin-info-head">
-                    <div className="origin-name">
-                      <span>{origin.name}</span>
-                      <span className="origin-priority-tag">{origin.tag}</span>
-                    </div>
-                    <div className="origin-counts">
-                      <span>{origin.count} contactos</span>
-                      <span className="origin-pct">({origin.pct}%)</span>
-                    </div>
-                  </div>
-                  <div className="origin-track">
-                    <div
-                      className={`origin-fill ${origin.fillClass}`}
-                      style={{ width: `${origin.pct}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        {/* 6. El equipo — solo para quien lo gestiona */}
+        {canSeeTeam && repPerformance.length > 0 && (
+          <TeamPerformancePanel
+            reps={repPerformance}
+            memberCount={orgUsers.length}
+            onManageTeam={() => onNavigate?.('users')}
+            onSelectRep={rep => goToOpportunities({ rep })}
+          />
+        )}
       </div>
 
-      {/* 4. Full Width: Actividad reciente del equipo */}
-      <div className="manager-activity-card" id="card-recent-activity" style={{ marginTop: '20px' }}>
+      {/* 7. Qué pasó — ahora del feed real, no de un array fijo */}
+      <div className="manager-activity-card" id="card-recent-activity">
         <div className="manager-card-head">
-          <h3>Actividad reciente del equipo</h3>
+          <h3>Actividad reciente</h3>
           <span className="head-meta">Últimas acciones registradas</span>
         </div>
 
-        <div className="manager-activity-list" id="manager-team-activity-list">
-          {DEFAULT_TEAM_ACTIVITIES.map(act => (
-            <div className="manager-activity-row" key={act.id}>
-              <div className="manager-activity-left">
-                {/* Avatar circular del rep */}
-                <div className="manager-activity-avatar">
-                  {act.repAvatarUrl ? (
-                    <img src={act.repAvatarUrl} alt={act.repName} referrerPolicy="no-referrer" />
-                  ) : (
-                    <span>{act.repInitials}</span>
-                  )}
+        {activities.length === 0 ? (
+          <div className="empty-state" style={{ padding: '18px 0' }}>
+            <div className="empty-state-desc">Todavía no hay actividad registrada.</div>
+          </div>
+        ) : (
+          <div className="manager-activity-list" id="manager-team-activity-list">
+            {activities.slice(0, 6).map(act => (
+              <div className="manager-activity-row" key={act.id}>
+                <div className="manager-activity-left">
+                  <UserAvatar
+                    name={act.author}
+                    avatarUrl={act.avatarUrl || EMPLOYEE_PROFILES[act.author]?.avatarUrl}
+                    size="lg"
+                    type={act.type}
+                  />
+                  <div className="manager-activity-body">
+                    <span className="rep-name">{act.author}</span>{' '}
+                    <span className="action-text">{act.action}</span>
+                    {act.highlight && <> <span className="target-entity">{act.highlight}</span></>}
+                  </div>
                 </div>
-
-                <div className="manager-activity-body">
-                  <span className="rep-name">{act.repName}</span>{' '}
-                  <span className="action-text">{act.actionText}</span>{' '}
-                  <span className="target-entity">{act.targetEntity}</span>
-                </div>
+                <div className="manager-activity-time">{act.when}</div>
               </div>
-
-              <div className="manager-activity-time">{act.timestamp}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

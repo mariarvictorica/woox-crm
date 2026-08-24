@@ -4,6 +4,7 @@ import {
   Opportunity,
   ViewType,
   StageKey,
+  OppSegment,
   ActivityEvent,
   UserMember,
   LeadFilterState,
@@ -131,6 +132,12 @@ export default function App() {
   const [selectedUserDetails, setSelectedUserDetails] = useState<UserMember | null>(null);
   const [oppModalContactId, setOppModalContactId] = useState<number | undefined>(undefined);
   const [leadInitialFilters, setLeadInitialFilters] = useState<Partial<LeadFilterState> | null>(null);
+  // Deep-link desde el Dashboard hacia Oportunidades, filtrado por etapa o rep.
+  const [oppInitialFilters, setOppInitialFilters] = useState<{
+    stage?: StageKey;
+    rep?: string;
+    segment?: OppSegment;
+  } | null>(null);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -168,9 +175,13 @@ export default function App() {
   }, []);
 
   const handleNavigate = (view: ViewType) => {
+    // Normal navigation resets the deep-link filters; only the Dashboard's own
+    // handlers set them.
     if (view === 'leads') {
-      // Normal navigation resets specific filter overrides
       setLeadInitialFilters(null);
+    }
+    if (view === 'opportunities') {
+      setOppInitialFilters(null);
     }
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -321,6 +332,26 @@ export default function App() {
 
   const handleSuperAdminUpdateUser = (updatedUser: UserMember) => {
     setUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
+  };
+
+  const handleNavigateToLeads = (filters: Partial<LeadFilterState>) => {
+    setLeadInitialFilters(filters);
+    setCurrentView('leads');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateToOpportunities = (filters: {
+    stage?: string;
+    rep?: string;
+    segment?: string;
+  }) => {
+    setOppInitialFilters({
+      stage: filters.stage as StageKey | undefined,
+      rep: filters.rep,
+      segment: filters.segment as OppSegment | undefined
+    });
+    setCurrentView('opportunities');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleNavigateToLeadsWithoutOpp = () => {
@@ -845,8 +876,11 @@ export default function App() {
               opportunities={opportunities}
               activities={activities}
               onNavigate={handleNavigate}
-              onNavigateToLeadsWithoutOpp={handleNavigateToLeadsWithoutOpp}
+              onNavigateToLeads={handleNavigateToLeads}
+              onNavigateToOpportunities={handleNavigateToOpportunities}
               onSelectOpportunity={handleSelectOpportunity}
+              orgUsers={orgUsers}
+              canSeeTeam={capabilities.manageTeam}
               organization={currentOrg}
               isOrgOwner={capabilities.manageOrganization && isOrgOwner}
               onCompleteOrgProfile={handleCompleteOrgProfile}
@@ -888,6 +922,7 @@ export default function App() {
 
           {currentView === 'opportunities' && (
             <OpportunitiesView
+              initialFilters={oppInitialFilters}
               opportunities={opportunities}
               contacts={contacts}
               onSelectOpportunity={handleSelectOpportunity}

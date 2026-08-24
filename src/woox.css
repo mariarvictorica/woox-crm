@@ -1786,6 +1786,275 @@ main {
   outline-offset: 2px;
 }
 
+/* =========================================================================
+   Dashboard: KPI trend, attention queue, team rollup.
+   All colours via tokens — the Dublinks theme redefines the whole palette,
+   so a hex here would break under the design-system switch.
+   ========================================================================= */
+
+/* No trend affordance existed anywhere in the app. Follows .won-metric-pill,
+   the established "value + semantic tint" pill. */
+.kpi-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 6px;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  align-self: flex-start;
+}
+.kpi-delta.up {
+  background: var(--good-bg);
+  color: var(--good-deep);
+}
+.kpi-delta.down {
+  background: var(--crit-bg);
+  color: var(--crit);
+}
+.kpi-delta.flat {
+  background: var(--cloud);
+  color: var(--graphite);
+}
+/* Said plainly instead of a dash, which reads as zero. */
+.kpi-delta.none {
+  background: transparent;
+  padding-left: 0;
+  color: var(--graphite);
+  font-weight: 500;
+}
+
+/* .kpi-action-tag only had styles nested under .kpi-warning, so it rendered
+   unstyled on a neutral card. This is the base; the amber override stays. */
+.manager-kpi-card .kpi-action-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 4px 9px;
+  border-radius: var(--r-md);
+  background: var(--cloud);
+  color: var(--graphite);
+  font-size: 11px;
+  font-weight: 600;
+  align-self: flex-start;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+.manager-kpi-card.clickable:hover .kpi-action-tag {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+/* ---- Attention queue ---- */
+.attention-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  margin-bottom: 8px;
+  background: var(--cloud);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.attention-row:last-child {
+  margin-bottom: 0;
+}
+.attention-row:hover {
+  background: var(--surface);
+  border-color: var(--steel);
+}
+.attention-row:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+/* Amber only for the item that genuinely outranks the others, so the colour
+   keeps meaning something. */
+.attention-row.is-urgent {
+  background: var(--warn-surface);
+  border-color: var(--warn-border);
+}
+.attention-row.is-urgent:hover {
+  background: var(--warn-surface-hover);
+}
+.attention-count {
+  flex-shrink: 0;
+  min-width: 30px;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.attention-row.is-urgent .attention-count {
+  color: var(--warn);
+}
+.attention-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.attention-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.attention-row.is-urgent .attention-label {
+  color: var(--warn-ink);
+}
+.attention-detail {
+  font-size: 11.5px;
+  color: var(--graphite);
+}
+.attention-cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.attention-row.is-urgent .attention-cta {
+  color: var(--warn-deep);
+}
+
+.attention-clear {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+.attention-clear-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--good-bg);
+  color: var(--good);
+  flex-shrink: 0;
+}
+.attention-clear-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.attention-clear-sub {
+  font-size: 12px;
+  color: var(--graphite);
+}
+
+/* ---- Team rollup ---- */
+.team-rep-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 11px 12px;
+  margin-bottom: 8px;
+  background: var(--cloud);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  flex-wrap: wrap;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.team-rep-row:last-child {
+  margin-bottom: 0;
+}
+.team-rep-row:hover {
+  background: var(--surface);
+  border-color: var(--steel);
+}
+.team-rep-row:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.team-rep-who {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 150px;
+}
+.team-rep-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.team-rep-metrics {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.team-rep-metric {
+  font-size: 11.5px;
+  color: var(--graphite);
+  white-space: nowrap;
+}
+.team-rep-metric b {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  margin-right: 3px;
+}
+.team-rep-flag {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: var(--r-sm);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-soft-strong);
+  color: var(--warn-ink);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.team-rep-row.is-idle {
+  border-color: var(--warn-soft-strong);
+}
+
+/* ---- Clickable pipeline rows ---- */
+.stage-item-row.clickable {
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  margin: 0 -8px;
+  padding: 6px 8px;
+  width: calc(100% + 16px);
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.stage-item-row.clickable:hover {
+  background: var(--cloud);
+  border-color: var(--border);
+}
+.stage-item-row.clickable:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.stage-row-value {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Shortcut chips in the Dashboard's organization-profile notice. A real
    class rather than inline styles because these are buttons and need hover
    and focus states. */
