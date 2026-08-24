@@ -196,25 +196,37 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
         }
       >
         {selfEdit && (
-          <div className="field-row">
-            <FormField
-              label="Nivel de acceso"
-              readOnly
-              hint="Solo el Super Admin puede cambiarlo."
-            >
-              <div id="self-edit-role" style={{ fontSize: '13px', color: 'var(--ink-700)', padding: '4px 0' }}>
-                {user.role}
-              </div>
-            </FormField>
+          // Grouped rather than two standalone fields: they are read-only for
+          // the same reason, and stating it on each one repeated the same
+          // sentence twice under adjacent columns.
+          <div className="field-section" id="self-edit-locked">
+            <div className="field-section-label">Definido por el Super Admin</div>
 
-            <FormField label="Organización" readOnly hint="Solo el Super Admin puede cambiarla.">
-              <div
-                id="self-edit-organization"
-                style={{ fontSize: '13px', color: 'var(--ink-700)', padding: '4px 0' }}
-              >
-                {organizationName || user.organization || '—'}
-              </div>
-            </FormField>
+            <div className="field-row">
+              <FormField label="Nivel de acceso" readOnly>
+                <div
+                  id="self-edit-role"
+                  style={{ fontSize: '13px', color: 'var(--ink-700)', padding: '4px 0' }}
+                >
+                  {user.role}
+                </div>
+              </FormField>
+
+              <FormField label="Organización" readOnly>
+                <div
+                  id="self-edit-organization"
+                  style={{ fontSize: '13px', color: 'var(--ink-700)', padding: '4px 0' }}
+                >
+                  {organizationName || user.organization || '—'}
+                </div>
+              </FormField>
+            </div>
+
+            <div className="field-message">
+              <span className="field-hint">
+                No se editan desde tu perfil.
+              </span>
+            </div>
           </div>
         )}
 
