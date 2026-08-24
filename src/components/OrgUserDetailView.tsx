@@ -131,7 +131,7 @@ export const OrgUserDetailView: React.FC<OrgUserDetailViewProps> = ({
               <span className="badge" style={{ background: 'var(--warn-bg)', color: 'var(--warn)' }}>Invitado</span>
             )}
             {user.status === 'Inactivo' && (
-              <span className="badge" style={{ background: 'var(--canvas)', color: 'var(--ink-500)', border: '1px solid var(--border)' }}>
+              <span className="badge badge-neutral">
                 Suspendido
               </span>
             )}

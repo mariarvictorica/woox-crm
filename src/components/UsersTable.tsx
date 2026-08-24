@@ -125,7 +125,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                   </span>
                 )}
                 {u.status === 'Inactivo' && (
-                  <span className="badge" style={{ background: 'var(--canvas)', color: 'var(--ink-500)', border: '1px solid var(--border)' }}>
+                  <span className="badge badge-neutral">
                     Suspendido
                   </span>
                 )}

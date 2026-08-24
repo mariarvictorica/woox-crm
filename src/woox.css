@@ -640,6 +640,39 @@ html[data-design-system='seline'] {
   --font-display: 'Lato', 'Helvetica Neue', Arial, ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Tags carry fill only — no outline. The reference reserves hairline borders
+   for cards and nav ("the border IS the structure" applies to surfaces), while
+   its own tag treatment is a solid pill. Covers the inline borders too, which
+   is what !important is for here: three status badges set theirs from JSX and
+   a stylesheet cannot otherwise reach them. */
+html[data-design-system='seline'] .badge,
+html[data-design-system='seline'] .badge-neutral,
+html[data-design-system='seline'] .priority-badge-pill,
+html[data-design-system='seline'] .origin-badge,
+html[data-design-system='seline'] .active-filter-badge,
+html[data-design-system='seline'] .org-profile-missing-chip,
+html[data-design-system='seline'] .team-rep-flag,
+html[data-design-system='seline'] .signin-role-tag,
+html[data-design-system='seline'] .note-opportunity-tag,
+html[data-design-system='seline'] .won-date-badge,
+html[data-design-system='seline'] .stage-opps-badge,
+html[data-design-system='seline'] .tab-badge,
+html[data-design-system='seline'] .kpi-action-tag,
+html[data-design-system='seline'] .kpi-delta {
+  border: none !important;
+}
+
+/* Losing the outline leaves these two with no shape at all: the neutral badge
+   filled itself with the page canvas, and the date badge with the card
+   surface. Given a real fill from the stone scale instead. */
+html[data-design-system='seline'] .badge-neutral {
+  background: var(--fog);
+  color: var(--ink-700);
+}
+html[data-design-system='seline'] .won-date-badge {
+  background: var(--cloud);
+}
+
 /* Pill buttons are the system's most recognisable structural move, and radius
    on .btn is hardcoded rather than tokenised, so tokens alone can't express
    it. Casing too: HP force-uppercases every button, which contradicts the
@@ -3810,6 +3843,14 @@ tbody tr.lead-row.row-selected:hover {
   border-radius: var(--r-pill);
   font-size: 11px;
   font-weight: 600;
+}
+/* The "Inactivo" / suspended state. Was the same inline style repeated in
+   three components, which made it untouchable by a theme — its fill is the
+   page canvas, so it relied entirely on the border to be visible. */
+.badge-neutral {
+  background: var(--canvas);
+  color: var(--ink-500);
+  border: 1px solid var(--border);
 }
 
 .back-link {
