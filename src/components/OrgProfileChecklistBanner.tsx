@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { OrgProfileField, OrgProfileFieldKey } from '../data/initialData';
+import { OrgProfileProgressBar } from './OrgProfileProgressBar';
 
 interface OrgProfileChecklistBannerProps {
   /** Fields still empty. Rendered as shortcuts, one per field. */
@@ -33,8 +34,6 @@ export const OrgProfileChecklistBanner: React.FC<OrgProfileChecklistBannerProps>
   const completed = total - missing.length;
   if (missing.length === 0) return null;
 
-  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-
   const toggle = () => {
     setCollapsed(prev => {
       const next = !prev;
@@ -44,17 +43,7 @@ export const OrgProfileChecklistBanner: React.FC<OrgProfileChecklistBannerProps>
   };
 
   const bar = (
-    <div
-      id="org-profile-progress"
-      className="stage-track"
-      role="progressbar"
-      aria-valuenow={completed}
-      aria-valuemin={0}
-      aria-valuemax={total}
-      aria-label="Progreso del perfil de la organización"
-    >
-      <div className="stage-fill" style={{ width: `${pct}%`, background: 'var(--warn)' }} />
-    </div>
+    <OrgProfileProgressBar id="org-profile-progress" completed={completed} total={total} />
   );
 
   return (

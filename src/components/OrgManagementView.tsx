@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Organization, UserMember } from '../types';
 import { FormField } from './FormField';
 import { UserAvatar } from './UserAvatar';
+import { OrgProfileProgressBar } from './OrgProfileProgressBar';
 import {
   COUNTRY_CODES,
   EMAIL_RE,
@@ -206,25 +207,36 @@ export const OrgManagementView: React.FC<OrgManagementViewProps> = ({
           <p>Datos de {organization.name}</p>
         </div>
         <div className="head-actions">
-          <span
+          {/* Same reading as the Dashboard notice, on the page that resolves
+              it — so progress doesn't only exist somewhere the Owner has
+              already left. No CTA here: this is where the work happens. */}
+          <div
             id="org-profile-completeness"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '5px 10px',
-              borderRadius: 'var(--r-sm)',
-              fontSize: '11.5px',
-              fontWeight: 600,
-              background: missing.length ? 'var(--warn-soft)' : 'var(--good-bg)',
-              color: missing.length ? 'var(--warn-ink)' : 'var(--good)',
-              border: `1px solid ${missing.length ? 'var(--warn-soft-strong)' : 'transparent'}`
-            }}
+            style={{ minWidth: '190px', display: 'flex', flexDirection: 'column', gap: '7px' }}
           >
-            {missing.length === 0
-              ? 'Datos completos'
-              : `${ORG_PROFILE_FIELDS.length - missing.length}/${ORG_PROFILE_FIELDS.length} datos completados`}
-          </span>
+            <span
+              style={{
+                fontSize: '11.5px',
+                fontWeight: 600,
+                color: missing.length ? 'var(--warn-ink)' : 'var(--good)'
+              }}
+            >
+              {missing.length === 0 ? (
+                'Datos completos'
+              ) : (
+                <>
+                  <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700 }}>
+                    {ORG_PROFILE_FIELDS.length - missing.length}/{ORG_PROFILE_FIELDS.length}
+                  </span>{' '}
+                  datos completados
+                </>
+              )}
+            </span>
+            <OrgProfileProgressBar
+              completed={ORG_PROFILE_FIELDS.length - missing.length}
+              total={ORG_PROFILE_FIELDS.length}
+            />
+          </div>
         </div>
       </div>
 
