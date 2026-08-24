@@ -1535,6 +1535,33 @@ main {
   background: var(--steel);
 }
 
+/* Shortcut chips in the Dashboard's organization-profile notice. A real
+   class rather than inline styles because these are buttons and need hover
+   and focus states. */
+.org-profile-missing-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--warn-ink);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-soft-strong);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.org-profile-missing-chip:hover {
+  background: var(--warn-soft-strong);
+  border-color: var(--warn-border);
+}
+.org-profile-missing-chip:focus-visible {
+  outline: 2px solid var(--warn-border);
+  outline-offset: 2px;
+}
+
 .stage-divider {
   margin: 10px 0;
   border-top: 1px dashed var(--border);

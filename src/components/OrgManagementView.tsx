@@ -9,6 +9,7 @@ import {
   getOrgMissingFields,
   splitPhone
 } from '../data/initialData';
+import type { OrgProfileFieldKey } from '../data/initialData';
 
 interface OrgManagementViewProps {
   organization: Organization;
@@ -16,6 +17,12 @@ interface OrgManagementViewProps {
   /** Every organization on the platform, to keep names unique. */
   allOrganizations: Organization[];
   onUpdateOrganization: (updated: Organization) => void;
+  /** Arriving from a specific shortcut in the Dashboard notice: land on that
+   *  field instead of making the Owner hunt for it. */
+  focusField?: OrgProfileFieldKey | null;
+  /** Called once focusField has been consumed, so the caller can clear it and
+   *  a later visit doesn't re-focus. */
+  onFocusFieldHandled?: () => void;
 }
 
 interface OrgFormValues {
@@ -60,7 +67,9 @@ export const OrgManagementView: React.FC<OrgManagementViewProps> = ({
   organization,
   owner,
   allOrganizations,
-  onUpdateOrganization
+  onUpdateOrganization,
+  focusField,
+  onFocusFieldHandled
 }) => {
   const [form, setForm] = useState<OrgFormValues>(() => toForm(organization));
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,6 +82,22 @@ export const OrgManagementView: React.FC<OrgManagementViewProps> = ({
     setForm(toForm(organization));
     setErrors({});
   }, [organization.id]);
+
+  // The logo has no input to focus — its control is the upload button.
+  useEffect(() => {
+    if (!focusField) return;
+    const targetId =
+      focusField === 'logoUrl' ? 'btn-org-logo-upload' : `org-mgmt-${focusField}`;
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.focus({ preventScroll: true });
+    }
+    onFocusFieldHandled?.();
+    // Only re-run when the request changes; onFocusFieldHandled is a stable
+    // clear-the-request callback, not part of the request.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusField]);
 
   const pristine = useMemo(() => toForm(organization), [organization]);
   const isDirty = JSON.stringify(form) !== JSON.stringify(pristine);

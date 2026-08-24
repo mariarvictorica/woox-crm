@@ -18,6 +18,7 @@ import {
   ORG_PROFILE_FIELDS,
   getOrgMissingFields
 } from '../data/initialData';
+import type { OrgProfileFieldKey } from '../data/initialData';
 import { OrgProfileChecklistBanner } from './OrgProfileChecklistBanner';
 import { UserAvatar } from './UserAvatar';
 
@@ -32,6 +33,8 @@ interface DashboardViewProps {
   /** Gates the setup notice: only the Owner can act on those gaps. The logo
    *  and name in the header show for everyone in the organization. */
   isOrgOwner?: boolean;
+  /** Go to "Mi organización", optionally landing on one specific field. */
+  onCompleteOrgProfile?: (field?: OrgProfileFieldKey) => void;
 }
 
 interface TeamActivity {
@@ -218,7 +221,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateToLeadsWithoutOpp,
   onSelectOpportunity,
   organization,
-  isOrgOwner = false
+  isOrgOwner = false,
+  onCompleteOrgProfile
 }) => {
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>('');
   const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
@@ -479,9 +483,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {orgMissing.length > 0 && (
         <OrgProfileChecklistBanner
-          completed={ORG_PROFILE_FIELDS.length - orgMissing.length}
+          missing={orgMissing}
           total={ORG_PROFILE_FIELDS.length}
-          onComplete={() => onNavigate?.('org-management')}
+          onComplete={field => onCompleteOrgProfile?.(field)}
         />
       )}
 

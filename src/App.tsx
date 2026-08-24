@@ -23,6 +23,7 @@ import {
   STAGE_LABEL,
   CURRENT_USER_ID
 } from './data/initialData';
+import type { OrgProfileFieldKey } from './data/initialData';
 import { TopBanner } from './components/TopBanner';
 import { Sidebar } from './components/Sidebar';
 import { DashboardView } from './components/DashboardView';
@@ -52,6 +53,10 @@ export default function App() {
   // OrganizationDetailView opens straight into edit mode for that org.
   const [pendingOrgEditId, setPendingOrgEditId] = useState<number | null>(null);
   const [selectedOrgUserId, setSelectedOrgUserId] = useState<number>(0);
+  // Which organization field "Mi organización" should land on, set when the
+  // Owner picks one from the Dashboard notice. Consumed once, like
+  // pendingOrgEditId.
+  const [pendingOrgField, setPendingOrgField] = useState<OrgProfileFieldKey | null>(null);
   // Which tab OrganizationDetailView should land on next time it mounts —
   // set to 'usuarios' when returning from a user's detail page, so the
   // Super Admin isn't dropped back on the ficha tab.
@@ -124,6 +129,12 @@ export default function App() {
       setLeadInitialFilters(null);
     }
     setCurrentView(view);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCompleteOrgProfile = (field?: OrgProfileFieldKey) => {
+    setPendingOrgField(field ?? null);
+    setCurrentView('org-management');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -710,6 +721,7 @@ export default function App() {
               onSelectOpportunity={handleSelectOpportunity}
               organization={currentOrg}
               isOrgOwner={isOrgOwner}
+              onCompleteOrgProfile={handleCompleteOrgProfile}
             />
           )}
 
@@ -788,6 +800,8 @@ export default function App() {
               owner={currentUser}
               allOrganizations={organizations}
               onUpdateOrganization={handleUpdateOrganization}
+              focusField={pendingOrgField}
+              onFocusFieldHandled={() => setPendingOrgField(null)}
             />
           )}
 
