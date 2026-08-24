@@ -21,7 +21,8 @@ import {
   INITIAL_ORGANIZATIONS,
   INITIAL_NOTES,
   STAGE_LABEL,
-  CURRENT_USER_ID
+  CURRENT_USER_ID,
+  PLATFORM_VIEW_OPTIONS
 } from './data/initialData';
 import type { OrgProfileFieldKey } from './data/initialData';
 import { TopBanner } from './components/TopBanner';
@@ -142,8 +143,21 @@ export default function App() {
 
   const handleSwitchRole = (role: PlatformRole) => {
     setCurrentRole(role);
-    setCurrentView(role === 'superadmin' ? 'organizations' : 'dashboard');
+    // Landing view comes from the option list, so a new panel brings its own
+    // and this stays untouched.
+    const landing = PLATFORM_VIEW_OPTIONS.find(o => o.value === role)?.landingView;
+    if (landing) setCurrentView(landing);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  /**
+   * There is no session to end yet — sign-in is the next batch, and this
+   * prototype starts already inside the app. Rather than fake a logged-out
+   * state, this reports the flow is pending so the menu entry is real and
+   * honest. It becomes a genuine sign-out once the auth screens exist.
+   */
+  const handleLogout = () => {
+    showToast('El cierre de sesión se conecta con la pantalla de inicio de sesión, todavía pendiente');
   };
 
   const handleCreateOrganization = (input: NewOrganizationInput) => {
@@ -657,6 +671,8 @@ export default function App() {
       <TopBanner
         designSystem={designSystem}
         onToggleDesignSystem={() => setDesignSystem(prev => (prev === 'hp' ? 'dublinks' : 'hp'))}
+        role={currentRole}
+        onSwitchRole={handleSwitchRole}
       />
 
       <div className="app">
@@ -669,7 +685,7 @@ export default function App() {
           canManageOrganization={isOrgOwner}
           currentUser={currentUser}
           onEditProfile={() => setIsEditProfileOpen(true)}
-          onSwitchRole={handleSwitchRole}
+          onLogout={handleLogout}
           sidebarMode={sidebarMode}
           onToggleSidebarMode={() => setSidebarMode(prev => (prev === 'dark' ? 'light' : 'dark'))}
         />

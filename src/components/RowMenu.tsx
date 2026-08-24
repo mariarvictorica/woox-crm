@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
+import { DropdownMenu } from './DropdownMenu';
 
 export interface RowMenuAction {
   label: string;
@@ -15,45 +16,22 @@ interface RowMenuProps {
 /**
  * Ellipsis action menu for a table row.
  *
- * Generalized from the note action menu (LeadDetailView / OpportunityDetailView)
- * so a third and later usage doesn't hand-roll its own dropdown again.
+ * The dropdown behaviour now lives in DropdownMenu, shared with the sidebar's
+ * account menu and the top bar's view selector. This keeps its own public API
+ * so every table using it is untouched.
  */
-export const RowMenu: React.FC<RowMenuProps> = ({ actions, ariaLabel }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleOutside = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsOpen(false);
-    };
-    document.addEventListener('mousedown', handleOutside);
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      document.removeEventListener('mousedown', handleOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [isOpen]);
-
-  return (
-    <div
-      className="row-menu-wrap"
-      ref={wrapRef}
-      // Rows this menu sits in are usually themselves clickable (e.g. to open
-      // a detail view) — stop the click here so opening the menu never also
-      // triggers the row.
-      onClick={e => e.stopPropagation()}
-    >
+export const RowMenu: React.FC<RowMenuProps> = ({ actions, ariaLabel }) => (
+  <DropdownMenu
+    items={actions}
+    ariaLabel={ariaLabel}
+    // Rows are usually clickable themselves, so opening the menu must not
+    // also open the row's detail view.
+    stopPropagation
+    renderTrigger={({ isOpen, toggle }) => (
       <button
         type="button"
         className={`row-menu-btn ${isOpen ? 'active' : ''}`}
-        onClick={() => setIsOpen(prev => !prev)}
+        onClick={toggle}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label={ariaLabel}
@@ -65,25 +43,6 @@ export const RowMenu: React.FC<RowMenuProps> = ({ actions, ariaLabel }) => {
           <circle cx="5" cy="12" r="2" />
         </svg>
       </button>
-
-      {isOpen && (
-        <div className="row-menu-dropdown" role="menu">
-          {actions.map(action => (
-            <button
-              key={action.label}
-              type="button"
-              className={`row-menu-item ${action.tone === 'danger' ? 'danger' : ''}`}
-              role="menuitem"
-              onClick={() => {
-                setIsOpen(false);
-                action.onClick();
-              }}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
+    )}
+  />
+);

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { PlatformRole, SidebarMode, ViewType, UserMember } from '../types';
 import { UserAvatar } from './UserAvatar';
+import { DropdownMenu } from './DropdownMenu';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -10,10 +11,10 @@ interface SidebarProps {
   role: PlatformRole;
   /** Only the Owner of an organization gets the "Mi organización" item. */
   canManageOrganization?: boolean;
-  /** The signed-in person, for the footer. */
+  /** The signed-in person, for the account menu. */
   currentUser?: UserMember;
   onEditProfile?: () => void;
-  onSwitchRole: (role: PlatformRole) => void;
+  onLogout?: () => void;
   sidebarMode: SidebarMode;
   onToggleSidebarMode: () => void;
 }
@@ -27,7 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   canManageOrganization = false,
   currentUser,
   onEditProfile,
-  onSwitchRole,
+  onLogout,
   sidebarMode,
   onToggleSidebarMode
 }) => {
@@ -253,70 +254,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
       </div>
 
-      {/* User footer: identity + role switcher, plus the entry point to your
-          own profile. Two sibling buttons rather than one clickable wrapper —
-          the wrapper carried role="button", and nesting a real button inside
-          that is invalid, so the second action needed its own element. */}
+      {/* Account menu. Switching panels moved to the top bar, so the sidebar
+          foot is now purely personal: who you are, and the two things you can
+          do about it. */}
       <div className="sidebar-footer" id="sidebar-user-footer">
-        <button
-          type="button"
-          className="sidebar-footer-identity sidebar-footer-switchable"
-          id="btn-switch-role"
-          title={`${displayName} · ${roleLabel} — clic para cambiar de rol`}
-          onClick={() => onSwitchRole(role === 'manager' ? 'superadmin' : 'manager')}
-        >
-          <div className="user-avatar-wrap">
-            <UserAvatar
-              name={displayName}
-              avatarUrl={currentUser?.avatarUrl}
-              initials={currentUser?.initials}
-              avatarBg={currentUser?.avatarBg}
-              size="md"
-              showOnline={true}
-            />
-          </div>
-          <div className="user-info">
-            <div className="who">{displayName}</div>
-            <div className="role">{roleLabel}</div>
-          </div>
-          {!collapsed && (
-            <svg
-              className="role-switch-icon"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
+        <DropdownMenu
+          ariaLabel="Menú de cuenta"
+          direction="up"
+          align="left"
+          menuClassName="account-menu"
+          items={[
+            { label: 'Editar perfil', onClick: () => onEditProfile?.() },
+            { label: 'Cerrar sesión', onClick: () => onLogout?.(), tone: 'danger' }
+          ]}
+          renderTrigger={({ isOpen, toggle }) => (
+            <button
+              type="button"
+              className={`sidebar-footer-identity sidebar-footer-switchable ${isOpen ? 'active' : ''}`}
+              id="btn-account-menu"
+              onClick={toggle}
+              aria-haspopup="menu"
+              aria-expanded={isOpen}
+              title={`${displayName} · ${roleLabel}`}
             >
-              <path d="M7 3 3 7l4 4" />
-              <path d="M3 7h13a4 4 0 0 1 4 4v1" />
-              <path d="M17 21l4-4-4-4" />
-              <path d="M21 17H8a4 4 0 0 1-4-4v-1" />
-            </svg>
+              <div className="user-avatar-wrap">
+                <UserAvatar
+                  name={displayName}
+                  avatarUrl={currentUser?.avatarUrl}
+                  initials={currentUser?.initials}
+                  avatarBg={currentUser?.avatarBg}
+                  size="md"
+                  showOnline={true}
+                />
+              </div>
+              <div className="user-info">
+                <div className="who">{displayName}</div>
+                <div className="role">{roleLabel}</div>
+              </div>
+              {!collapsed && (
+                <svg
+                  className="role-switch-icon"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              )}
+              {collapsed && (
+                <span className="nav-tooltip user-tooltip">
+                  {displayName} &middot; {roleLabel}
+                </span>
+              )}
+            </button>
           )}
-          {collapsed && (
-            <span className="nav-tooltip user-tooltip">
-              {displayName} &middot; {roleLabel}
-            </span>
-          )}
-        </button>
-
-        {onEditProfile && !collapsed && (
-          <button
-            type="button"
-            className="sidebar-footer-action"
-            id="btn-edit-my-profile"
-            onClick={onEditProfile}
-            title="Editar mi perfil"
-            aria-label="Editar mi perfil"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-          </button>
-        )}
+        />
       </div>
     </aside>
   );

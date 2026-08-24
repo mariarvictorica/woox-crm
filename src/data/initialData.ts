@@ -1,4 +1,4 @@
-import { Contact, Opportunity, UserMember, ActivityEvent, StageKey, Organization, NoteItem } from '../types';
+import { Contact, Opportunity, UserMember, ActivityEvent, StageKey, Organization, NoteItem, PlatformRole, ViewType } from '../types';
 
 export const INITIAL_CONTACTS: Contact[] = [
   {
@@ -505,6 +505,16 @@ export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  *  App.tsx rather than being read directly, so the sign-in flow only has to
  *  write that state and nothing else changes. */
 export const CURRENT_USER_ID = 1;
+
+/**
+ * The panels the prototype can be viewed as. The view selector renders this
+ * list rather than a pair of hardcoded options, so adding the Rep panel later
+ * is one entry here plus its landing view — no change to the control itself.
+ */
+export const PLATFORM_VIEW_OPTIONS: { value: PlatformRole; label: string; landingView: ViewType }[] = [
+  { value: 'manager', label: 'Manager', landingView: 'dashboard' },
+  { value: 'superadmin', label: 'Super Admin', landingView: 'organizations' }
+];
 
 export type OrgProfileFieldKey = 'logoUrl' | 'tradeName' | 'taxId' | 'address' | 'email' | 'phone';
 

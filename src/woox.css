@@ -1000,6 +1000,16 @@ nav.nav {
   font-size: 11px;
   color: var(--steel);
 }
+/* The account menu's wrapper sits between .sidebar-footer and the trigger,
+   so it has to carry the width the trigger used to take directly. */
+.sidebar-footer > .row-menu-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.sidebar.collapsed .sidebar-footer > .row-menu-wrap {
+  flex: 0 0 auto;
+}
+
 .sidebar-footer-switchable {
   cursor: pointer;
   border-radius: var(--r-md);
@@ -1013,7 +1023,7 @@ nav.nav {
    button so the "edit my profile" action could sit beside it without being
    nested inside another button's role. */
 .sidebar-footer-identity {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -4080,6 +4090,56 @@ textarea.note-input:focus {
 .row-menu-item.danger:hover {
   background: var(--crit-bg);
   color: var(--crit);
+}
+
+/* Panel selector in the top bar. Deliberately quieter than a primary
+   button — it sits beside the design-system switch and neither should read
+   as the page's main action. */
+.view-switcher-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.view-switcher-trigger:hover,
+.view-switcher-trigger.active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.view-switcher-trigger:focus-visible {
+  outline: 2px solid var(--primary-bright);
+  outline-offset: 2px;
+}
+.view-switcher-label {
+  color: rgba(255, 255, 255, 0.55);
+}
+.view-switcher-value {
+  font-weight: 700;
+}
+
+/* Menus that open upward (sidebar foot) or align to their trigger's left. */
+.row-menu-dropdown.drop-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+.row-menu-dropdown.align-left {
+  right: auto;
+  left: 0;
+}
+.row-menu-dropdown.account-menu {
+  min-width: 190px;
+}
+.row-menu-item.is-selected {
+  color: var(--primary);
+  font-weight: 600;
 }
 
 /* SearchableSelect.tsx — filterable dropdown for long option lists (the
