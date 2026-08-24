@@ -198,9 +198,7 @@ export const OrgManagementView: React.FC<OrgManagementViewProps> = ({
           >
             {missing.length === 0
               ? 'Datos completos'
-              : missing.length === 1
-                ? '1 dato pendiente'
-                : `${missing.length} datos pendientes`}
+              : `${ORG_PROFILE_FIELDS.length - missing.length}/${ORG_PROFILE_FIELDS.length} datos completados`}
           </span>
         </div>
       </div>

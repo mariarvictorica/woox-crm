@@ -479,7 +479,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       {orgMissing.length > 0 && (
         <OrgProfileChecklistBanner
-          missing={orgMissing}
+          completed={ORG_PROFILE_FIELDS.length - orgMissing.length}
           total={ORG_PROFILE_FIELDS.length}
           onComplete={() => onNavigate?.('org-management')}
         />
