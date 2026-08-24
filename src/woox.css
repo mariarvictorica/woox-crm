@@ -1411,6 +1411,10 @@ main {
   color: var(--on-primary);
   border-color: var(--primary);
   box-shadow: 0 1px 3px rgba(2, 74, 216, 0.25);
+  /* One step up from .btn's 13px. The size variants below still win for
+     .btn-sm / .btn-xs, since they come later at equal specificity — a small
+     primary stays small, which is the point of having the variants. */
+  font-size: 14px;
 }
 .btn-primary:hover {
   background: var(--primary-deep);
