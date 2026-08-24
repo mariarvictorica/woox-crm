@@ -8,6 +8,7 @@ import {
   UserMember,
   LeadFilterState,
   PlatformRole,
+  Session,
   Organization,
   DesignSystem,
   SidebarMode,
@@ -21,8 +22,9 @@ import {
   INITIAL_ORGANIZATIONS,
   INITIAL_NOTES,
   STAGE_LABEL,
-  CURRENT_USER_ID,
-  PLATFORM_VIEW_OPTIONS
+  PLATFORM_VIEW_OPTIONS,
+  PLATFORM_CAPABILITIES,
+  SIGN_IN_VARIANTS
 } from './data/initialData';
 import type { OrgProfileFieldKey } from './data/initialData';
 import { TopBanner } from './components/TopBanner';
@@ -42,6 +44,7 @@ import { NewOpportunityModal } from './components/NewOpportunityModal';
 import { NewOrganizationModal, NewOrganizationInput } from './components/NewOrganizationModal';
 import { InviteUserDrawer } from './components/InviteUserDrawer';
 import { EditUserDrawer } from './components/EditUserDrawer';
+import { SignInView } from './components/SignInView';
 import { OrgManagementView } from './components/OrgManagementView';
 import { UserDetailView } from './components/UserDetailView';
 import { Toast } from './components/Toast';
@@ -76,13 +79,15 @@ export default function App() {
   const [users, setUsers] = useState<UserMember[]>(INITIAL_USERS);
   const [organizations, setOrganizations] = useState<Organization[]>(INITIAL_ORGANIZATIONS);
 
-  const [currentRole, setCurrentRole] = useState<PlatformRole>('manager');
-  // Who is signed in. A plain binding for now: the sign-in flow will turn this
-  // into state and write it, but holding it in state today buys nothing (the
-  // setter has no caller) and costs a real trap — useState only reads its
-  // initial value on mount, so HMR keeps a stale user after CURRENT_USER_ID
-  // changes, and the app silently disagrees with the source.
-  const currentUserId = CURRENT_USER_ID;
+  // Null until someone signs in. Everything below derives from it, so signing
+  // in and out is a single write.
+  const [session, setSession] = useState<Session | null>(null);
+  // Which of the three sign-ins is on screen. Mirrors the location hash,
+  // because in production each is its own URL.
+  const [signInVariant, setSignInVariant] = useState<PlatformRole>('manager');
+  const currentRole: PlatformRole = session?.role ?? 'manager';
+  const currentUserId = session?.userId ?? 0;
+  const capabilities = PLATFORM_CAPABILITIES[currentRole];
   // Defaults to 'hp' on every load, deliberately not persisted beyond the
   // session (no localStorage) — nobody should land in the experimental
   // theme by accident on a fresh visit.
@@ -91,6 +96,20 @@ export default function App() {
   // be previewed under either design system. Defaults to 'dark' (today's
   // look) for the same reason designSystem defaults to 'hp'.
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>('dark');
+
+  // The sign-in variant lives in the hash so each role's screen is its own
+  // address, the way production will hand out three URLs. Reading it back also
+  // means a reload or a shared link lands on the same screen.
+  useEffect(() => {
+    const readHash = () => {
+      const raw = window.location.hash.replace('#', '').trim();
+      const match = SIGN_IN_VARIANTS.find(v => v.role === raw);
+      if (match) setSignInVariant(match.role);
+    };
+    readHash();
+    window.addEventListener('hashchange', readHash);
+    return () => window.removeEventListener('hashchange', readHash);
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-design-system', designSystem);
@@ -142,7 +161,7 @@ export default function App() {
   };
 
   const handleSwitchRole = (role: PlatformRole) => {
-    setCurrentRole(role);
+    setSession(prev => (prev ? { ...prev, role } : prev));
     // Landing view comes from the option list, so a new panel brings its own
     // and this stays untouched.
     const landing = PLATFORM_VIEW_OPTIONS.find(o => o.value === role)?.landingView;
@@ -151,13 +170,43 @@ export default function App() {
   };
 
   /**
-   * There is no session to end yet — sign-in is the next batch, and this
-   * prototype starts already inside the app. Rather than fake a logged-out
-   * state, this reports the flow is pending so the menu entry is real and
-   * honest. It becomes a genuine sign-out once the auth screens exist.
+   * Resolves credentials for one sign-in screen. Returns an error message, or
+   * null once the session is open.
+   *
+   * Each screen accepts only its own account, which is the whole point of
+   * having three: signing in with the Manager's credentials on the App Admin
+   * screen has to fail, or the separation is decorative.
    */
+  const handleSignIn = (email: string, password: string, role: PlatformRole): string | null => {
+    const variant = SIGN_IN_VARIANTS.find(v => v.role === role);
+    if (!variant) return 'Este acceso no está disponible';
+
+    if (email !== variant.demoEmail.toLowerCase()) {
+      const belongsElsewhere = SIGN_IN_VARIANTS.find(v => v.demoEmail.toLowerCase() === email);
+      return belongsElsewhere
+        ? `Esa cuenta entra por el acceso de ${belongsElsewhere.tag}`
+        : 'No encontramos una cuenta con ese correo';
+    }
+    if (password !== variant.demoPassword) return 'La contraseña no es correcta';
+
+    const user = users.find(u => u.email.toLowerCase() === email);
+    if (!user) return 'No encontramos una cuenta con ese correo';
+    if (user.status === 'Inactivo') return 'Esta cuenta está suspendida';
+
+    setSession({ userId: user.id, role });
+    const landing = PLATFORM_VIEW_OPTIONS.find(o => o.value === role)?.landingView;
+    if (landing) setCurrentView(landing);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    return null;
+  };
+
   const handleLogout = () => {
-    showToast('El cierre de sesión se conecta con la pantalla de inicio de sesión, todavía pendiente');
+    setSession(null);
+    setSignInVariant(currentRole);
+    window.location.hash = currentRole;
+    setSelectedUserDetails(null);
+    setPendingOrgField(null);
+    setIsEditProfileOpen(false);
   };
 
   const handleCreateOrganization = (input: NewOrganizationInput) => {
@@ -673,8 +722,21 @@ export default function App() {
         onToggleDesignSystem={() => setDesignSystem(prev => (prev === 'hp' ? 'dublinks' : 'hp'))}
         role={currentRole}
         onSwitchRole={handleSwitchRole}
+        showViewSwitcher={Boolean(session)}
       />
 
+      {!session && (
+        <SignInView
+          variantRole={signInVariant}
+          onVariantChange={role => {
+            setSignInVariant(role);
+            window.location.hash = role;
+          }}
+          onSignIn={handleSignIn}
+        />
+      )}
+
+      {session && (
       <div className="app">
         <Sidebar
           currentView={currentView}
@@ -682,7 +744,8 @@ export default function App() {
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(prev => !prev)}
           role={currentRole}
-          canManageOrganization={isOrgOwner}
+          canManageTeam={capabilities.manageTeam}
+          canManageOrganization={capabilities.manageOrganization && isOrgOwner}
           currentUser={currentUser}
           onEditProfile={() => setIsEditProfileOpen(true)}
           onLogout={handleLogout}
@@ -691,7 +754,7 @@ export default function App() {
         />
 
         <main id="main-content-panel">
-          {currentRole === 'superadmin' && currentView === 'organizations' && (
+          {capabilities.platformAdmin && currentView === 'organizations' && (
             <OrganizationsView
               organizations={organizations}
               users={users}
@@ -701,7 +764,7 @@ export default function App() {
             />
           )}
 
-          {currentRole === 'superadmin' && currentView === 'org-detail' && (
+          {capabilities.platformAdmin && currentView === 'org-detail' && (
             <OrganizationDetailView
               organization={selectedOrg}
               users={users}
@@ -720,7 +783,7 @@ export default function App() {
             />
           )}
 
-          {currentRole === 'superadmin' && currentView === 'org-user-detail' && (
+          {capabilities.platformAdmin && currentView === 'org-user-detail' && (
             <OrgUserDetailView
               organization={selectedOrg}
               user={users.find(u => u.id === selectedOrgUserId)}
@@ -734,7 +797,7 @@ export default function App() {
             />
           )}
 
-          {currentRole === 'superadmin' && currentView === 'sa-users' && (
+          {capabilities.platformAdmin && currentView === 'sa-users' && (
             <SuperAdminUsersView
               users={users}
               organizations={organizations}
@@ -748,7 +811,7 @@ export default function App() {
             />
           )}
 
-          {currentRole === 'manager' && (
+          {(currentRole === 'manager' || currentRole === 'rep') && (
             <>
           {currentView === 'dashboard' && (
             <DashboardView
@@ -759,7 +822,7 @@ export default function App() {
               onNavigateToLeadsWithoutOpp={handleNavigateToLeadsWithoutOpp}
               onSelectOpportunity={handleSelectOpportunity}
               organization={currentOrg}
-              isOrgOwner={isOrgOwner}
+              isOrgOwner={capabilities.manageOrganization && isOrgOwner}
               onCompleteOrgProfile={handleCompleteOrgProfile}
             />
           )}
@@ -824,7 +887,7 @@ export default function App() {
             />
           )}
 
-          {currentView === 'users' && (
+          {currentView === 'users' && capabilities.manageTeam && (
             <UsersView
               users={wooxUsers}
               onSelectUser={handleSelectUser}
@@ -833,7 +896,7 @@ export default function App() {
             />
           )}
 
-          {currentView === 'org-management' && isOrgOwner && currentOrg && (
+          {currentView === 'org-management' && capabilities.manageOrganization && isOrgOwner && currentOrg && (
             <OrgManagementView
               organization={currentOrg}
               owner={currentUser}
@@ -844,7 +907,7 @@ export default function App() {
             />
           )}
 
-          {currentView === 'user-detail' && selectedUserDetails && (
+          {currentView === 'user-detail' && capabilities.manageTeam && selectedUserDetails && (
             <UserDetailView
               user={selectedUserDetails}
               allUsers={wooxUsers}
@@ -865,6 +928,7 @@ export default function App() {
           )}
         </main>
       </div>
+      )}
 
       <NewLeadModal
         isOpen={isLeadModalOpen}

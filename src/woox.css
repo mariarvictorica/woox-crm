@@ -1600,6 +1600,192 @@ main {
   background: var(--steel);
 }
 
+/* =========================================================================
+   Sign in — the only screen that replaces the sidebar + main layout instead
+   of overlaying it, so it owns its own centring.
+   ========================================================================= */
+.signin-screen {
+  min-height: calc(100vh - 35px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 40px 20px;
+  background: var(--canvas);
+}
+.signin-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-card);
+  padding: 26px 28px 22px;
+}
+.signin-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.signin-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-md);
+  background: var(--primary);
+  color: #fff;
+  flex-shrink: 0;
+}
+.signin-brand-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.signin-brand-sub {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+}
+/* The tag is the only thing separating the three sign-ins, so it has to be
+   the most legible element in the header. */
+.signin-role-tag {
+  margin-left: auto;
+  padding: 4px 9px;
+  border-radius: var(--r-pill);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.signin-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 3px;
+}
+.signin-subtitle {
+  font-size: 13px;
+  color: var(--ink-500);
+  margin-bottom: 18px;
+}
+.signin-note {
+  font-size: 11.5px;
+  color: var(--ink-500);
+  font-style: italic;
+  margin-bottom: 16px;
+}
+.signin-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+.signin-link {
+  width: 100%;
+  justify-content: center;
+  margin-top: 8px;
+}
+.signin-form-error {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 11px;
+  margin-bottom: 4px;
+  border-radius: var(--r-sm);
+  background: var(--crit-bg);
+  border: 1px solid var(--crit-soft, var(--crit-bg));
+  color: var(--crit);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.signin-demo {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border);
+}
+.signin-demo-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+  margin-bottom: 8px;
+}
+.signin-demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.signin-demo-row code {
+  padding: 3px 7px;
+  border-radius: var(--r-xs);
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--ink-800);
+}
+.signin-sent {
+  text-align: center;
+}
+.signin-sent-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--good-bg);
+  color: var(--good);
+  margin-bottom: 14px;
+}
+.signin-variants {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+.signin-variants-label {
+  font-size: 11px;
+  color: var(--ink-500);
+  margin-right: 2px;
+}
+.signin-variant-btn {
+  padding: 4px 9px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-700);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.signin-variant-btn:hover {
+  background: var(--cloud);
+}
+.signin-variant-btn.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.signin-variant-btn:focus-visible {
+  outline: 2px solid var(--primary-ring, var(--primary));
+  outline-offset: 2px;
+}
+
 /* Shortcut chips in the Dashboard's organization-profile notice. A real
    class rather than inline styles because these are buttons and need hover
    and focus states. */

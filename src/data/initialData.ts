@@ -501,11 +501,6 @@ export const USER_ROLES_LIST = [
  *  it — the country-code list drifted that way before. */
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Who is sitting in front of the prototype. Seeds the session state in
- *  App.tsx rather than being read directly, so the sign-in flow only has to
- *  write that state and nothing else changes. */
-export const CURRENT_USER_ID = 1;
-
 /**
  * The panels the prototype can be viewed as. The view selector renders this
  * list rather than a pair of hardcoded options, so adding the Rep panel later
@@ -513,7 +508,49 @@ export const CURRENT_USER_ID = 1;
  */
 export const PLATFORM_VIEW_OPTIONS: { value: PlatformRole; label: string; landingView: ViewType }[] = [
   { value: 'manager', label: 'Manager', landingView: 'dashboard' },
+  { value: 'rep', label: 'Representante de Ventas', landingView: 'dashboard' },
   { value: 'superadmin', label: 'Super Admin', landingView: 'organizations' }
+];
+
+/**
+ * What each panel is allowed to do. One table instead of role checks spread
+ * through the components, so a new panel declares its permissions here and
+ * every gate follows.
+ */
+export interface PlatformCapabilities {
+  /** The Usuarios tab: see the team, invite, edit and suspend members. */
+  manageTeam: boolean;
+  /** "Mi organización". Still additionally requires being the Owner. */
+  manageOrganization: boolean;
+  /** The cross-organization panel: Organizaciones and platform-wide Usuarios. */
+  platformAdmin: boolean;
+}
+
+export const PLATFORM_CAPABILITIES: Record<PlatformRole, PlatformCapabilities> = {
+  manager: { manageTeam: true, manageOrganization: true, platformAdmin: false },
+  // A rep works the same CRM — contacts, opportunities, notes — but the team
+  // and the organization's own record are not theirs to administer.
+  rep: { manageTeam: false, manageOrganization: false, platformAdmin: false },
+  superadmin: { manageTeam: false, manageOrganization: false, platformAdmin: true }
+};
+
+/**
+ * The sign-in screens. In production each of these is its own URL; here the
+ * variant comes from the location hash, so the three are genuinely three
+ * addresses rather than a toggle.
+ *
+ * Credentials are shown on the screen on purpose: the point is to demo the
+ * flow, including getting it wrong.
+ */
+export const SIGN_IN_VARIANTS: {
+  role: PlatformRole;
+  tag: string;
+  demoEmail: string;
+  demoPassword: string;
+}[] = [
+  { role: 'superadmin', tag: 'App Admin', demoEmail: 'admin@woox.mx', demoPassword: 'demo1234' },
+  { role: 'manager', tag: 'Manager', demoEmail: 'enrique@woox.mx', demoPassword: 'demo1234' },
+  { role: 'rep', tag: 'Representante de Ventas', demoEmail: 'diego@woox.mx', demoPassword: 'demo1234' }
 ];
 
 export type OrgProfileFieldKey = 'logoUrl' | 'tradeName' | 'taxId' | 'address' | 'email' | 'phone';
@@ -544,6 +581,23 @@ export function getOrgMissingFields(org?: Organization): OrgProfileField[] {
 
 
 export const INITIAL_USERS: UserMember[] = [
+  // Platform-level account, deliberately outside every tenant: the Super Admin
+  // administers organizations rather than belonging to one. Until the sign-in
+  // screens existed the 'Super Admin (SA)' role had badge colours and a filter
+  // option but no user to apply them to.
+  {
+    id: 100,
+    name: 'Paula Rendón',
+    firstName: 'Paula',
+    lastName: 'Rendón',
+    position: 'Administradora de la plataforma',
+    email: 'admin@woox.mx',
+    role: 'Super Admin (SA)',
+    status: 'Activo',
+    lastAccess: 'hoy, 08:40',
+    initials: 'PR',
+    avatarBg: 'var(--accent)'
+  },
   {
     id: 1,
     name: 'Enrique Macias',

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { PlatformRole, SidebarMode, ViewType, UserMember } from '../types';
 import { UserAvatar } from './UserAvatar';
 import { DropdownMenu } from './DropdownMenu';
+import { PLATFORM_VIEW_OPTIONS, PLATFORM_CAPABILITIES } from '../data/initialData';
 
 interface SidebarProps {
   currentView: ViewType;
@@ -9,6 +10,8 @@ interface SidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
   role: PlatformRole;
+  /** The Usuarios item — reps administer no one. */
+  canManageTeam?: boolean;
   /** Only the Owner of an organization gets the "Mi organización" item. */
   canManageOrganization?: boolean;
   /** The signed-in person, for the account menu. */
@@ -25,6 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
   onToggleCollapse,
   role,
+  canManageTeam = false,
   canManageOrganization = false,
   currentUser,
   onEditProfile,
@@ -55,8 +59,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onToggleCollapse]);
 
-  const displayName = currentUser?.name || 'Enrique Macias';
-  const roleLabel = role === 'manager' ? 'Manager' : 'Super Admin';
+  const canPlatformAdmin = PLATFORM_CAPABILITIES[role].platformAdmin;
+  const displayName = currentUser?.name || 'Usuario';
+  const roleLabel = PLATFORM_VIEW_OPTIONS.find(o => o.value === role)?.label || role;
 
   return (
     <aside
@@ -110,7 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Main Navigation Items */}
       <nav className="nav" id="sidebar-nav">
-        {role === 'superadmin' ? (
+        {canPlatformAdmin ? (
           <>
             <button
               id="nav-organizations"
@@ -193,6 +198,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {collapsed && <span className="nav-tooltip">Oportunidades</span>}
             </button>
 
+            {canManageTeam && (
             <button
               id="nav-users"
               className={`nav-item ${activeNav === 'users' ? 'active' : ''}`}
@@ -209,6 +215,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="label">Usuarios</span>
               {collapsed && <span className="nav-tooltip">Usuarios</span>}
             </button>
+            )}
 
             {canManageOrganization && (
               <button

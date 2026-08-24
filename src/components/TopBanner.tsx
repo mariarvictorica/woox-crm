@@ -10,6 +10,8 @@ interface TopBannerProps {
    *  top bar owns app-level switching and the sidebar foot owns the account. */
   role: PlatformRole;
   onSwitchRole: (role: PlatformRole) => void;
+  /** Hidden while signed out: there is no view to switch to yet. */
+  showViewSwitcher?: boolean;
 }
 
 /**
@@ -23,7 +25,8 @@ export const TopBanner: React.FC<TopBannerProps> = ({
   designSystem,
   onToggleDesignSystem,
   role,
-  onSwitchRole
+  onSwitchRole,
+  showViewSwitcher = true
 }) => {
   const isDublinks = designSystem === 'dublinks';
   const currentView = PLATFORM_VIEW_OPTIONS.find(o => o.value === role);
@@ -33,6 +36,7 @@ export const TopBanner: React.FC<TopBannerProps> = ({
       Prototipo interactivo &mdash; <span>datos de ejemplo</span> para revisar el enfoque de V1 con el equipo
 
       <div className="preview-switches">
+        {showViewSwitcher && (
         <DropdownMenu
           ariaLabel="Cambiar de vista"
           items={PLATFORM_VIEW_OPTIONS.map(o => ({
@@ -57,6 +61,7 @@ export const TopBanner: React.FC<TopBannerProps> = ({
             </button>
           )}
         />
+        )}
 
         <div className="design-system-switch" id="design-system-switch">
           <span className={`design-system-switch-label ${!isDublinks ? 'active' : ''}`}>Diseño actual</span>

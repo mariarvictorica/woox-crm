@@ -102,9 +102,16 @@ export type ViewType = 'dashboard' | 'leads' | 'opportunities' | 'users' | 'lead
 export type OppSegment = 'open' | 'all' | 'closed';
 
 // Which top-level panel the current session is viewing: the Org Manager's
-// CRM, or the platform-wide Super Admin panel. Distinct from UserMember.role,
-// which is a person's role inside their own organization.
-export type PlatformRole = 'manager' | 'superadmin';
+// CRM, the same CRM with a sales rep's reduced permissions, or the
+// platform-wide Super Admin panel. Distinct from UserMember.role, which is a
+// person's role inside their own organization.
+export type PlatformRole = 'manager' | 'rep' | 'superadmin';
+
+/** An authenticated session. Null means signed out. */
+export interface Session {
+  userId: number;
+  role: PlatformRole;
+}
 
 /** Which token set the app renders with — see woox.css's
  *  html[data-design-system='dublinks'] block and TopBanner.tsx's switch. */
