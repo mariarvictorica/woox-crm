@@ -156,7 +156,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
           >
             <option value="all">Todos los roles</option>
             <option value="Manager">Manager</option>
-            <option value="Rep">Representante Ventas</option>
+            <option value="Rep">Representante de Ventas</option>
           </select>
           {searchTerm && (
             <button

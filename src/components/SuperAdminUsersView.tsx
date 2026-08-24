@@ -144,7 +144,7 @@ export const SuperAdminUsersView: React.FC<SuperAdminUsersViewProps> = ({
           >
             <option value="all">Todos los roles</option>
             <option value="Manager">{displayRole('Manager')}</option>
-            <option value="Rep">Representante Ventas</option>
+            <option value="Rep">Representante de Ventas</option>
             <option value="Super Admin (SA)">Super Admin</option>
           </select>
 

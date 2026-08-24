@@ -329,7 +329,7 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
                           onClick={() => handleSort('rep')}
                         >
                           <div className="th-sort-inner">
-                            <span>Representante Ventas</span>
+                            <span>Representante de Ventas</span>
                             <span className="th-sort-icon">
                               {sortField === 'rep' ? (
                                 sortDirection === 'asc' ? (

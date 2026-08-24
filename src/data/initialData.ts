@@ -506,13 +506,13 @@ export const splitPhone = (raw: string): { code: string; number: string } => {
  * updated.
  */
 export function displayRole(role: string): string {
-  if (role === 'Rep') return 'Representante Ventas';
+  if (role === 'Rep') return 'Representante de Ventas';
   if (role === 'Super Admin (SA)') return 'Super Admin';
   return role;
 }
 
 export const USER_ROLES_LIST = [
-  { value: 'Rep', label: 'Representante Ventas', desc: 'Asesor comercial para atención de leads y oportunidades' },
+  { value: 'Rep', label: 'Representante de Ventas', desc: 'Asesor comercial para atención de leads y oportunidades' },
   { value: 'Manager', label: 'Manager', desc: 'Supervisión de equipo, reportes y gestión comercial' }
 ];
 
