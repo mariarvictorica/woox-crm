@@ -9,7 +9,7 @@ export interface RowMenuAction {
 
 interface RowMenuProps {
   actions: RowMenuAction[];
-  /** Names what the menu belongs to, e.g. "Opciones de Woox Pinturas". */
+  /** Names what the menu belongs to, e.g. "Opciones de Pinturerias Garin". */
   ariaLabel: string;
 }
 

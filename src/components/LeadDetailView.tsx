@@ -22,6 +22,8 @@ interface LeadDetailViewProps {
   onUpdateLead?: (leadId: number, updatedFields: Partial<Contact>) => void;
   onToggleHot: (contactId: number) => void;
   onShowToast: (msg: string) => void;
+  /** Who is signed in, for note authorship. */
+  currentUserName: string;
 }
 
 
@@ -38,7 +40,8 @@ export const LeadDetailView: React.FC<LeadDetailViewProps> = ({
   onCreateOpportunity,
   onUpdateLead,
   onToggleHot,
-  onShowToast
+  onShowToast,
+  currentUserName
 }) => {
   // Contact view shows every note that belongs to this contact, whether
   // it's contact-level or tagged to one of the contact's own opportunities.
@@ -342,6 +345,7 @@ export const LeadDetailView: React.FC<LeadDetailViewProps> = ({
           </div>
 
           <NotesAndFiles
+            currentUserName={currentUserName}
             notes={notes}
             contactId={contact.id}
             relatedOpportunities={relatedOpps}

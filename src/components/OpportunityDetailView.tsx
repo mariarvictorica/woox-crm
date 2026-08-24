@@ -36,6 +36,8 @@ interface OpportunityDetailViewProps {
   onUpdateStage: (oppId: number, stage: StageKey, extraFields?: { value?: number | null; close?: string; lostReason?: string }) => void;
   onUpdateOpportunity?: (oppId: number, updatedFields: Partial<Opportunity>) => void;
   onShowToast: (msg: string) => void;
+  /** Who is signed in, for note authorship. */
+  currentUserName: string;
 }
 
 function generateSuggestedReply(
@@ -119,7 +121,8 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   onSelectOpportunity,
   onUpdateStage,
   onUpdateOpportunity,
-  onShowToast
+  onShowToast,
+  currentUserName
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -204,7 +207,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       id: 'tl-' + Date.now(),
       initial: 'EM',
       type: 'rep',
-      author: 'Enrique',
+      author: currentUserName.split(' ')[0],
       action: `movió la oportunidad a ${STAGE_LABEL[newStage]}`,
       when: 'justo ahora'
     };
@@ -293,7 +296,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       id: 'tl-' + Date.now(),
       initial: 'EM',
       type: 'rep',
-      author: 'Enrique',
+      author: currentUserName.split(' ')[0],
       action: 'actualizó los datos de la oportunidad',
       when: 'justo ahora'
     };
@@ -309,7 +312,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       id: 'tl-' + Date.now(),
       initial: 'EM',
       type: 'rep',
-      author: 'Enrique',
+      author: currentUserName.split(' ')[0],
       action: 'agregó una nueva nota con adjuntos',
       when: 'justo ahora'
     };
@@ -322,7 +325,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
       id: 'tl-' + Date.now(),
       initial: 'EM',
       type: 'rep',
-      author: 'Enrique',
+      author: currentUserName.split(' ')[0],
       action: 'eliminó una nota de la oportunidad',
       when: 'justo ahora'
     };
@@ -710,6 +713,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
 
           {/* Section: Notes with File Attachments & Edit/Delete */}
           <NotesAndFiles
+            currentUserName={currentUserName}
             notes={notes}
             contactId={opportunity.contactId}
             fixedOpportunityId={opportunity.id}

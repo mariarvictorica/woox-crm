@@ -5,7 +5,6 @@ import { UserAvatar } from './UserAvatar';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SearchableSelect } from './SearchableSelect';
 
-const CURRENT_MANAGER_NAME = 'Enrique Macias';
 
 function getAttachmentType(fileName: string): NoteAttachment['type'] {
   const ext = fileName.split('.').pop()?.toLowerCase() || '';
@@ -48,6 +47,9 @@ interface NotesAndFilesProps {
    *  view, reinforcing that notes are one shared list, not two. */
   onNavigateToOpportunity: (oppId: number) => void;
   onShowToast: (msg: string) => void;
+  /** Who is writing. Was a module constant naming the only Manager; he now
+   *  administers the platform, so notes have to be attributed to the session. */
+  currentUserName: string;
 }
 
 /**
@@ -67,7 +69,8 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
   onUpdateNote,
   onDeleteNote,
   onNavigateToOpportunity,
-  onShowToast
+  onShowToast,
+  currentUserName
 }) => {
   const isOpportunityScoped = fixedOpportunityId != null;
 
@@ -162,7 +165,7 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
       id: 'note-' + now,
       contactId,
       opportunityId: isOpportunityScoped ? fixedOpportunityId : noteOppId === '' ? undefined : noteOppId,
-      author: CURRENT_MANAGER_NAME,
+      author: currentUserName,
       initials: 'EM',
       time: 'justo ahora',
       createdAtTimestamp: now,
@@ -408,7 +411,7 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
             </p>
           ) : (
             visibleNotes.map(n => {
-              const isManager = n.author === CURRENT_MANAGER_NAME;
+              const isManager = n.author === currentUserName;
               const isEditing = editingNoteId === n.id;
               const canEdit = isNoteEditable(n);
               const noteOpp = n.opportunityId != null ? relatedOpportunities.find(o => o.id === n.opportunityId) : undefined;

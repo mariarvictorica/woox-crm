@@ -30,6 +30,8 @@ interface DashboardViewProps {
   onNavigateToLeadsWithoutOpp?: () => void;
   onSelectOpportunity?: (oppId: number) => void;
   organization?: Organization;
+  /** Who is signed in, for the header line. */
+  currentUserName?: string;
   /** Gates the setup notice: only the Owner can act on those gaps. The logo
    *  and name in the header show for everyone in the organization. */
   isOrgOwner?: boolean;
@@ -59,9 +61,9 @@ const DEFAULT_TEAM_ACTIVITIES: TeamActivity[] = [
   },
   {
     id: 'act-2',
-    repName: 'Maribel',
+    repName: 'Maria Torres',
     repInitials: 'M',
-    repAvatarUrl: EMPLOYEE_PROFILES['Maribel']?.avatarUrl,
+    repAvatarUrl: EMPLOYEE_PROFILES['Maria Torres']?.avatarUrl,
     actionText: 'registró una nota en',
     targetEntity: 'Contratista García (Landeros Arquitectura)',
     timestamp: 'hace 28 min'
@@ -95,11 +97,11 @@ const DEFAULT_TEAM_ACTIVITIES: TeamActivity[] = [
   },
   {
     id: 'act-6',
-    repName: 'Enrique Macias',
+    repName: 'Pedro Barcellona',
     repInitials: 'EM',
-    repAvatarUrl: EMPLOYEE_PROFILES['Enrique Macias']?.avatarUrl,
+    repAvatarUrl: EMPLOYEE_PROFILES['Pedro Barcellona']?.avatarUrl,
     actionText: 'reasignó 3 contactos a',
-    targetEntity: 'Maribel · Zona Hotelera Cancún',
+    targetEntity: 'Maria Torres · Zona Hotelera Cancún',
     timestamp: 'hace 4 h'
   }
 ];
@@ -221,6 +223,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onNavigateToLeadsWithoutOpp,
   onSelectOpportunity,
   organization,
+  currentUserName,
   isOrgOwner = false,
   onCompleteOrgProfile
 }) => {
@@ -475,7 +478,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="manager-dash-titles">
             <h1 id="dash-title">Panel del Manager · Dashboard</h1>
             <p id="dash-subtitle">
-              {organization?.name || 'Woox Pinturas y Acabados S.A. de C.V.'} · Enrique Macias
+              {[organization?.name, currentUserName].filter(Boolean).join(' · ')}
             </p>
           </div>
         </div>

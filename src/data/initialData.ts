@@ -234,7 +234,7 @@ export const INITIAL_OPPORTUNITIES: Opportunity[] = [
     name: 'Cotización inicial',
     contactId: 2,
     stage: 'nuevo',
-    rep: 'Maribel',
+    rep: 'Maria Torres',
     value: 12000,
     close: '—',
     last: 'hace 1 h',
@@ -267,7 +267,7 @@ export const INITIAL_OPPORTUNITIES: Opportunity[] = [
     name: 'Impermeabilizante terrazas',
     contactId: 5,
     stage: 'negociacion',
-    rep: 'Maribel',
+    rep: 'Maria Torres',
     value: 54000,
     close: '25 ago 2026',
     last: 'ayer',
@@ -301,7 +301,7 @@ export const INITIAL_OPPORTUNITIES: Opportunity[] = [
     name: 'Consulta producto',
     contactId: 8,
     stage: 'contactado',
-    rep: 'Maribel',
+    rep: 'Maria Torres',
     value: null,
     close: '—',
     last: 'hace 2 días',
@@ -312,7 +312,7 @@ export const INITIAL_OPPORTUNITIES: Opportunity[] = [
     name: 'Acabados Torre Altabrisa',
     contactId: 2,
     stage: 'ganado',
-    rep: 'Maribel',
+    rep: 'Maria Torres',
     value: 58000,
     close: '2026-05-18',
     last: 'hace 3 meses',
@@ -356,7 +356,7 @@ export const INITIAL_OPPORTUNITIES: Opportunity[] = [
     name: 'Restauración fachada histórica',
     contactId: 7,
     stage: 'ganado',
-    rep: 'Maribel',
+    rep: 'Maria Torres',
     value: 89000,
     close: '2026-08-14',
     last: 'hace 4 días',
@@ -393,17 +393,31 @@ export const EMPLOYEE_PROFILES: Record<string, {
 }> = {
   'Enrique Macias': {
     name: 'Enrique Macias',
-    role: 'Manager',
+    role: 'Super Admin',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     initials: 'EM',
     avatarBg: 'var(--accent)'
   },
   'Enrique': {
     name: 'Enrique Macias',
-    role: 'Manager',
+    role: 'Super Admin',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     initials: 'EM',
     avatarBg: 'var(--accent)'
+  },
+  'Pedro Barcellona': {
+    name: 'Pedro Barcellona',
+    role: 'Manager',
+    avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80',
+    initials: 'PB',
+    avatarBg: 'var(--primary)'
+  },
+  'Pedro': {
+    name: 'Pedro Barcellona',
+    role: 'Manager',
+    avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80',
+    initials: 'PB',
+    avatarBg: 'var(--primary)'
   },
   'Diego': {
     name: 'Diego',
@@ -412,11 +426,11 @@ export const EMPLOYEE_PROFILES: Record<string, {
     initials: 'D',
     avatarBg: 'var(--info)'
   },
-  'Maribel': {
-    name: 'Maribel',
-    role: 'Vendedora',
+  'Maria Torres': {
+    name: 'Maria Torres',
+    role: 'Representante de Ventas',
     avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-    initials: 'M',
+    initials: 'MT',
     avatarBg: 'var(--orange)'
   },
   'Adamaris': {
@@ -451,13 +465,6 @@ export function getEmployeeProfile(name?: string) {
     avatarBg: 'var(--graphite)'
   };
 }
-
-export const ORGANIZATIONS_LIST = [
-  'Woox Pinturas y Acabados S.A. de C.V.',
-  'Woox Sureste (Cancún & Riviera)',
-  'Woox Norte (Torreón & Monterrey)',
-  'Woox Centro (CDMX & Guadalajara)'
-];
 
 // Single source for the phone country-code selector. Previously duplicated in
 // NewLeadModal, EditLeadModal, NewOrganizationModal and OrganizationDetailView,
@@ -548,9 +555,9 @@ export const SIGN_IN_VARIANTS: {
   demoEmail: string;
   demoPassword: string;
 }[] = [
-  { role: 'superadmin', tag: 'App Admin', demoEmail: 'admin@woox.mx', demoPassword: 'demo1234' },
-  { role: 'manager', tag: 'Manager', demoEmail: 'enrique@woox.mx', demoPassword: 'demo1234' },
-  { role: 'rep', tag: 'Representante de Ventas', demoEmail: 'diego@woox.mx', demoPassword: 'demo1234' }
+  { role: 'superadmin', tag: 'App Admin', demoEmail: 'enrique@woox.mx', demoPassword: 'demo1234' },
+  { role: 'manager', tag: 'Manager', demoEmail: 'pedro@garin.mx', demoPassword: 'demo1234' },
+  { role: 'rep', tag: 'Representante de Ventas', demoEmail: 'maria@garin.mx', demoPassword: 'demo1234' }
 ];
 
 export type OrgProfileFieldKey = 'logoUrl' | 'tradeName' | 'taxId' | 'address' | 'email' | 'phone';
@@ -582,37 +589,40 @@ export function getOrgMissingFields(org?: Organization): OrgProfileField[] {
 
 export const INITIAL_USERS: UserMember[] = [
   // Platform-level account, deliberately outside every tenant: the Super Admin
-  // administers organizations rather than belonging to one. Until the sign-in
-  // screens existed the 'Super Admin (SA)' role had badge colours and a filter
-  // option but no user to apply them to.
-  {
-    id: 100,
-    name: 'Paula Rendón',
-    firstName: 'Paula',
-    lastName: 'Rendón',
-    position: 'Administradora de la plataforma',
-    email: 'admin@woox.mx',
-    role: 'Super Admin (SA)',
-    status: 'Activo',
-    lastAccess: 'hoy, 08:40',
-    initials: 'PR',
-    avatarBg: 'var(--accent)'
-  },
+  // administers the WooX platform and its organizations rather than belonging
+  // to one. `organization` is absent on purpose — the Super Admin experience
+  // must never show a tenant as their own.
   {
     id: 1,
     name: 'Enrique Macias',
     firstName: 'Enrique',
     lastName: 'Macias',
-    position: 'Sales Director & Manager',
+    position: 'Super Admin · WooX Platform',
     phone: '+52 871 440 2199',
     email: 'enrique@woox.mx',
-    role: 'Manager',
-    organization: 'Woox Pinturas y Acabados S.A. de C.V.',
+    role: 'Super Admin (SA)',
     status: 'Activo',
     lastAccess: 'hoy, 09:12',
     initials: 'EM',
     avatarBg: 'var(--accent)',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+  },
+  // Owner and Manager of KUM S.A.
+  {
+    id: 5,
+    name: 'Pedro Barcellona',
+    firstName: 'Pedro',
+    lastName: 'Barcellona',
+    position: 'Gerente Comercial',
+    phone: '+52 871 512 7730',
+    email: 'pedro@garin.mx',
+    role: 'Manager',
+    organization: 'KUM S.A',
+    status: 'Activo',
+    lastAccess: 'hoy, 09:05',
+    initials: 'PB',
+    avatarBg: 'var(--primary)',
+    avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 2,
@@ -621,9 +631,9 @@ export const INITIAL_USERS: UserMember[] = [
     lastName: 'Valenzuela',
     position: 'Asesor Comercial B2B',
     phone: '+52 871 123 4567',
-    email: 'diego@woox.mx',
+    email: 'diego@garin.mx',
     role: 'Rep',
-    organization: 'Woox Pinturas y Acabados S.A. de C.V.',
+    organization: 'KUM S.A',
     status: 'Activo',
     lastAccess: 'hoy, 10:44',
     initials: 'D',
@@ -632,14 +642,14 @@ export const INITIAL_USERS: UserMember[] = [
   },
   {
     id: 3,
-    name: 'Maribel',
-    firstName: 'Maribel',
-    lastName: 'Orozco',
+    name: 'Maria Torres',
+    firstName: 'Maria',
+    lastName: 'Torres',
     position: 'Ejecutiva de Cuentas Clave',
     phone: '+52 871 987 6543',
-    email: 'maribel@woox.mx',
+    email: 'maria@garin.mx',
     role: 'Rep',
-    organization: 'Woox Pinturas y Acabados S.A. de C.V.',
+    organization: 'KUM S.A',
     status: 'Activo',
     lastAccess: 'hoy, 08:57',
     initials: 'M',
@@ -653,9 +663,9 @@ export const INITIAL_USERS: UserMember[] = [
     lastName: 'Gómez',
     position: 'Asesora de Ventas Retail & Obras',
     phone: '+52 871 554 3322',
-    email: 'adamaris@woox.mx',
+    email: 'adamaris@garin.mx',
     role: 'Rep',
-    organization: 'Woox Pinturas y Acabados S.A. de C.V.',
+    organization: 'KUM S.A',
     status: 'Activo',
     lastAccess: 'ayer, 18:30',
     initials: 'A',
@@ -667,9 +677,9 @@ export const INITIAL_USERS: UserMember[] = [
 export const INITIAL_ORGANIZATIONS: Organization[] = [
   {
     id: 1,
-    name: 'Woox Pinturas y Acabados S.A. de C.V.',
-    tradeName: 'WooX',
-    ownerId: 1, // Enrique Macias, ver INITIAL_USERS
+    name: 'KUM S.A',
+    tradeName: 'Pinturerias Garin',
+    ownerId: 5, // Pedro Barcellona, ver INITIAL_USERS
     address: 'Torreón, Coahuila',
     createdAt: '2026-06-01'
   }
@@ -689,7 +699,7 @@ export const INITIAL_NOTES: NoteItem[] = [
   {
     id: 'cn-mgr-1',
     contactId: 0,
-    author: 'Enrique Macias',
+    author: 'Pedro Barcellona',
     initials: 'EM',
     time: 'ayer, 16:30',
     createdAtTimestamp: Date.now() - 25 * 3600 * 1000,
@@ -805,7 +815,7 @@ export const INITIAL_DASHBOARD_ACTIVITIES: ActivityEvent[] = [
     id: 'a3',
     initial: 'M',
     type: 'rep',
-    author: 'Maribel',
+    author: 'Maria Torres',
     action: 'añadió una nota a',
     highlight: 'Contratista García',
     when: 'hace 1 h',

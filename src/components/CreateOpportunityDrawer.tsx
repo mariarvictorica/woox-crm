@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Contact, Opportunity } from '../types';
+import { EMPLOYEE_PROFILES } from '../data/initialData';
 import { UserAvatar } from './UserAvatar';
 import { Dialog } from './Dialog';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FormField } from './FormField';
 import { getOriginBadgeClass, getOriginDisplayName } from './LeadsView';
 
-const REP_OPTIONS = [
-  { value: 'Diego', label: 'Diego' },
-  { value: 'Maribel', label: 'Maribel' },
-  { value: 'Adamaris', label: 'Adamaris' },
-  { value: 'Enrique Macias', label: 'Enrique Macias (Manager)' }
-];
+// Was a literal list naming the old cast, with the Manager hardcoded. Reads
+// from the shared profiles so renaming or adding a team member is one edit.
+const REP_OPTIONS = Object.values(EMPLOYEE_PROFILES)
+  .filter(p => p.role !== 'Super Admin')
+  .filter((p, i, all) => all.findIndex(o => o.name === p.name) === i)
+  .map(p => ({
+    value: p.name,
+    label: p.role === 'Manager' ? `${p.name} (Manager)` : p.name
+  }));
 
 interface CreateOpportunityDrawerProps {
   isOpen: boolean;

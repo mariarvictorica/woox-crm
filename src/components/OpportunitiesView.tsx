@@ -152,7 +152,7 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
           onChange={e => setRepFilter(e.target.value)}
         >
           <option value="">Todos los reps</option>
-          <option value="Maribel">Maribel</option>
+          <option value="Maria Torres">Maria Torres</option>
           <option value="Adamaris">Adamaris</option>
           <option value="Diego">Diego</option>
         </select>

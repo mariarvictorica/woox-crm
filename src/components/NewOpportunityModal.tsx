@@ -160,7 +160,7 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
               style={{ flex: 1 }}
             >
               <option value="Diego">Diego</option>
-              <option value="Maribel">Maribel</option>
+              <option value="Maria Torres">Maria Torres</option>
               <option value="Adamaris">Adamaris</option>
             </select>
             <UserAvatar name={rep} size="md" />

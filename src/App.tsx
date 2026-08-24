@@ -135,6 +135,28 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Session-derived values. Up here rather than beside the other derived data
+  // because the handlers below need them.
+  //
+  // The signed-in user is looked up in `users` rather than snapshotted, so
+  // editing their own profile is reflected without extra plumbing.
+  const currentUser = users.find(u => u.id === currentUserId);
+  // No fallback on purpose: the Super Admin belongs to no organization, and a
+  // "default to the first one" would hand them a tenant as their own — exactly
+  // what the platform/organization split must not do.
+  const currentOrg = currentUser?.organization
+    ? organizations.find(o => o.name === currentUser.organization)
+    : undefined;
+  const isOrgOwner = Boolean(currentUser && currentOrg && currentOrg.ownerId === currentUser.id);
+  // Everyone in the signed-in user's organization. Filtering by name keeps
+  // other tenants' users (and their Owners) out of this org's Usuarios list.
+  const orgUsers = users.filter(u => currentOrg && u.organization === currentOrg.name);
+
+  // Whoever is acting, for activity entries. Was the literal 'Enrique' back
+  // when he was the only Manager; he now administers the platform, so
+  // attributing organization activity to him would be wrong.
+  const actorFirstName = currentUser?.firstName || currentUser?.name?.split(' ')[0] || 'Sistema';
+
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
     if (toastTimeoutRef.current) {
@@ -434,7 +456,7 @@ export default function App() {
         id: 'act-' + Date.now(),
         initial: 'EM',
         type: 'rep',
-        author: 'Enrique',
+        author: actorFirstName,
         action: 'movió',
         highlight: `${targetOpp.name} a ${STAGE_LABEL[newStage]}`,
         when: 'justo ahora'
@@ -492,7 +514,7 @@ export default function App() {
       id: 'act-' + Date.now(),
       initial: 'EM',
       type: 'rep',
-      author: 'Enrique',
+      author: actorFirstName,
       action: 'actualizó los datos del contacto',
       highlight: updatedName,
       when: 'justo ahora'
@@ -522,7 +544,7 @@ export default function App() {
       id: 'act-' + Date.now(),
       initial: 'EM',
       type: 'rep',
-      author: 'Enrique',
+      author: actorFirstName,
       action: `creó la oportunidad "${newOpp.name}" ligada a`,
       highlight: associatedContact ? associatedContact.name : 'Contacto',
       when: 'justo ahora'
@@ -542,7 +564,7 @@ export default function App() {
       id: 'act-' + Date.now(),
       initial: 'EM',
       type: 'rep',
-      author: 'Enrique',
+      author: actorFirstName,
       action: 'actualizó los datos de la oportunidad',
       highlight: updatedName,
       when: 'justo ahora'
@@ -567,7 +589,7 @@ export default function App() {
       id: 'act-' + Date.now(),
       initial: 'EM',
       type: 'rep',
-      author: 'Enrique',
+      author: actorFirstName,
       action: `envió una invitación a`,
       highlight: newUser.email,
       when: 'justo ahora'
@@ -700,20 +722,6 @@ export default function App() {
   const oppContact = currentOpp ? contacts.find(c => c.id === currentOpp.contactId) : undefined;
   const selectedOrg = organizations.find(o => o.id === selectedOrgId);
 
-  // The Manager panel only ever represents WooX itself in this prototype —
-  // there's no "switch tenant" concept on that side. Filtering by its name
-  // keeps organizations created from the Super Admin side (and their Owner
-  // users) out of WooX's own Usuarios list.
-  // The signed-in user is looked up in `users` rather than snapshotted, so
-  // editing their own profile is reflected without extra plumbing.
-  const currentUser = users.find(u => u.id === currentUserId);
-  const currentOrg =
-    organizations.find(o => o.name === currentUser?.organization) ||
-    organizations.find(o => o.id === 1);
-  const isOrgOwner = Boolean(currentUser && currentOrg && currentOrg.ownerId === currentUser.id);
-
-  const woox = currentOrg;
-  const wooxUsers = users.filter(u => u.organization === woox?.name);
 
   return (
     <div className="app-container" id="woox-app">
@@ -815,6 +823,7 @@ export default function App() {
             <>
           {currentView === 'dashboard' && (
             <DashboardView
+              currentUserName={currentUser?.name || ''}
               contacts={contacts}
               opportunities={opportunities}
               activities={activities}
@@ -843,6 +852,7 @@ export default function App() {
 
           {currentView === 'lead-detail' && currentContact && (
             <LeadDetailView
+              currentUserName={currentUser?.name || ''}
               contact={currentContact}
               opportunities={opportunities}
               notes={notes}
@@ -871,6 +881,7 @@ export default function App() {
 
           {currentView === 'opp-detail' && currentOpp && (
             <OpportunityDetailView
+              currentUserName={currentUser?.name || ''}
               opportunity={currentOpp}
               contact={oppContact}
               contacts={contacts}
@@ -889,7 +900,7 @@ export default function App() {
 
           {currentView === 'users' && capabilities.manageTeam && (
             <UsersView
-              users={wooxUsers}
+              users={orgUsers}
               onSelectUser={handleSelectUser}
               onInviteUser={handleOpenInviteUser}
               onShowToast={showToast}
@@ -910,7 +921,7 @@ export default function App() {
           {currentView === 'user-detail' && capabilities.manageTeam && selectedUserDetails && (
             <UserDetailView
               user={selectedUserDetails}
-              allUsers={wooxUsers}
+              allUsers={orgUsers}
               organizations={organizations}
               opportunities={opportunities}
               contacts={contacts}

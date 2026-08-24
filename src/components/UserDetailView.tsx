@@ -236,7 +236,7 @@ export const UserDetailView: React.FC<UserDetailViewProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px', fontSize: '13.5px', color: 'var(--ink-500)', flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 600, color: 'var(--ink-700)' }}>{user.position || 'Asesor Comercial'}</span>
                 <span>&middot;</span>
-                <span>{user.organization || 'Woox Pinturas y Acabados S.A. de C.V.'}</span>
+                <span>{user.organization || 'Sin organización'}</span>
                 <span>&middot;</span>
                 <span>{user.email}</span>
                 {user.phone && (
@@ -588,7 +588,7 @@ export const UserDetailView: React.FC<UserDetailViewProps> = ({
                         </svg>
                         <div className="ftext">
                           <div className="k">Organización</div>
-                          <div className="v">{user.organization || 'Woox Pinturas y Acabados S.A. de C.V.'}</div>
+                          <div className="v">{user.organization || 'Sin organización'}</div>
                         </div>
                       </div>
                     </div>
