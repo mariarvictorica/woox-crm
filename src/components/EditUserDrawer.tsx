@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserMember } from '../types';
 import { Dialog } from './Dialog';
 import { ConfirmDialog } from './ConfirmDialog';
+import { FormField } from './FormField';
 import { UserFormFields, UserFormValues } from './UserFormFields';
 import { splitPhone } from '../data/initialData';
 
@@ -11,6 +12,17 @@ interface EditUserDrawerProps {
   onClose: () => void;
   onSave: (updatedUser: UserMember) => void;
   onShowToast?: (msg: string) => void;
+  /**
+   * Someone editing their own profile rather than an admin editing a member.
+   * Hides the access-level picker, surfaces role and organization as
+   * read-only, and — the part that matters — carries the stored values
+   * through to the payload so neither can change from this form regardless of
+   * what the state holds. App's own-profile handler pins them again; a form
+   * is the wrong place for the only copy of a permission rule.
+   */
+  selfEdit?: boolean;
+  /** Shown read-only in selfEdit mode. */
+  organizationName?: string;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,7 +47,9 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
   user,
   onClose,
   onSave,
-  onShowToast
+  onShowToast,
+  selfEdit = false,
+  organizationName
 }) => {
   const [values, setValues] = useState<UserFormValues>(emptyValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -94,7 +108,7 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
       values.firstName !== (user.firstName || user.name.split(' ')[0] || '') ||
       values.lastName !== (user.lastName || user.name.split(' ').slice(1).join(' ') || '') ||
       values.email !== (user.email || '') ||
-      values.role !== (user.role || 'Rep') ||
+      (!selfEdit && values.role !== (user.role || 'Rep')) ||
       values.position !== (user.position || '') ||
       values.countryCode !== code ||
       values.phone !== number ||
@@ -133,7 +147,10 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
       firstName: values.firstName.trim(),
       lastName: values.lastName.trim(),
       email: values.email.trim().toLowerCase(),
-      role: values.role,
+      // Editing yourself never rewrites either of these, whatever the form
+      // state says. Organization is not a form field in any mode.
+      role: selfEdit ? user.role : values.role,
+      organization: user.organization,
       position: values.position.trim() || undefined,
       phone: values.phone.trim() ? `${values.countryCode} ${values.phone.trim()}` : undefined,
       initials,
@@ -141,7 +158,9 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
     });
 
     onClose();
-    if (onShowToast) onShowToast(`Usuario ${fullName} actualizado con éxito`);
+    if (onShowToast) {
+      onShowToast(selfEdit ? 'Tu perfil se actualizó con éxito' : `Usuario ${fullName} actualizado con éxito`);
+    }
   };
 
   return (
@@ -150,8 +169,12 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
         isOpen={isOpen}
         variant="drawer"
         id="user-edit-drawer"
-        title="Editar usuario"
-        subtitle="Datos personales, nivel de acceso y contacto."
+        title={selfEdit ? 'Editar mi perfil' : 'Editar usuario'}
+        subtitle={
+          selfEdit
+            ? 'Tus datos personales y de contacto.'
+            : 'Datos personales, nivel de acceso y contacto.'
+        }
         isDirty={isDirty}
         onRequestDiscard={() => setShowDiscard(true)}
         onClose={onClose}
@@ -172,6 +195,29 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
           </>
         }
       >
+        {selfEdit && (
+          <div className="field-row">
+            <FormField
+              label="Nivel de acceso"
+              readOnly
+              hint="Solo el Super Admin puede cambiarlo."
+            >
+              <div id="self-edit-role" style={{ fontSize: '13px', color: 'var(--ink-700)', padding: '4px 0' }}>
+                {user.role}
+              </div>
+            </FormField>
+
+            <FormField label="Organización" readOnly hint="Solo el Super Admin puede cambiarla.">
+              <div
+                id="self-edit-organization"
+                style={{ fontSize: '13px', color: 'var(--ink-700)', padding: '4px 0' }}
+              >
+                {organizationName || user.organization || '—'}
+              </div>
+            </FormField>
+          </div>
+        )}
+
         <UserFormFields
           values={values}
           errors={errors}
@@ -181,6 +227,7 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
           idPrefix="edit-user"
           fallbackInitials={user.initials}
           fallbackAvatarBg={user.avatarBg}
+          showRolePicker={!selfEdit}
         />
       </Dialog>
 

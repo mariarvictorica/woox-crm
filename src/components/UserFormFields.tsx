@@ -26,6 +26,12 @@ interface UserFormFieldsProps {
   /** Fallback initials/colour for the avatar preview when editing. */
   fallbackInitials?: string;
   fallbackAvatarBg?: string;
+  /**
+   * Off when someone is editing their own profile: a person cannot grant
+   * themselves a different level of access, so the control has no business
+   * being on screen. Defaults on, leaving every admin-side caller unchanged.
+   */
+  showRolePicker?: boolean;
 }
 
 /**
@@ -44,7 +50,8 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
   onBlur,
   idPrefix,
   fallbackInitials,
-  fallbackAvatarBg
+  fallbackAvatarBg,
+  showRolePicker = true
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -120,6 +127,7 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
         />
       </FormField>
 
+      {showRolePicker && (
       <FormField label="Nivel de acceso" required error={err('role')}>
         <div className="role-picker" role="radiogroup" aria-label="Nivel de acceso">
           {USER_ROLES_LIST.map(r => {
@@ -151,6 +159,7 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
           })}
         </div>
       </FormField>
+      )}
 
       {/* Everything below is optional and never blocks the task. */}
       <div className="field-section">

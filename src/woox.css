@@ -671,6 +671,11 @@ svg {
 .sidebar.collapsed .sidebar-footer {
   justify-content: center;
 }
+.sidebar.collapsed .sidebar-footer-identity {
+  flex: 0 0 auto;
+  justify-content: center;
+  margin-left: 0;
+}
 
 .sidebar-header {
   display: flex;
@@ -1002,6 +1007,56 @@ nav.nav {
   padding-left: 8px;
   padding-right: 8px;
   transition: background 0.15s var(--ease);
+}
+
+/* Identity + role switcher. Was a clickable wrapper div; split into a real
+   button so the "edit my profile" action could sit beside it without being
+   nested inside another button's role. */
+.sidebar-footer-identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  margin: 0 0 0 -8px;
+  background: transparent;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+/* Icon-only sibling action. */
+.sidebar-footer-action {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-sm);
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+.sidebar-footer-action:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.sidebar-footer-action:focus-visible {
+  outline: 2px solid var(--primary-bright);
+  outline-offset: 2px;
+}
+html[data-sidebar-mode='light'] .sidebar-footer-action {
+  color: var(--graphite);
+}
+html[data-sidebar-mode='light'] .sidebar-footer-action:hover {
+  background: var(--cloud);
+  color: var(--ink-900);
 }
 .sidebar-footer-switchable:hover {
   background: rgba(255, 255, 255, 0.06);

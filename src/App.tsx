@@ -40,6 +40,7 @@ import { NewLeadModal } from './components/NewLeadModal';
 import { NewOpportunityModal } from './components/NewOpportunityModal';
 import { NewOrganizationModal, NewOrganizationInput } from './components/NewOrganizationModal';
 import { InviteUserDrawer } from './components/InviteUserDrawer';
+import { EditUserDrawer } from './components/EditUserDrawer';
 import { OrgManagementView } from './components/OrgManagementView';
 import { UserDetailView } from './components/UserDetailView';
 import { Toast } from './components/Toast';
@@ -106,6 +107,7 @@ export default function App() {
   // Same drawer, opened from the platform-wide Usuarios tab, where the Super
   // Admin must pick the organization before the rest of the form applies.
   const [isPlatformUserDrawerOpen, setIsPlatformUserDrawerOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [selectedUserDetails, setSelectedUserDetails] = useState<UserMember | null>(null);
   const [oppModalContactId, setOppModalContactId] = useState<number | undefined>(undefined);
   const [leadInitialFilters, setLeadInitialFilters] = useState<Partial<LeadFilterState> | null>(null);
@@ -516,6 +518,25 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  /**
+   * Editing your own profile. Two rules live here rather than in the form,
+   * because a form can be bypassed and a permission rule shouldn't have a
+   * single copy sitting in the UI:
+   *
+   *  - the write only ever targets the session's own user, so a payload
+   *    carrying someone else's id cannot reach another record;
+   *  - role and organization are taken from the stored record, never from the
+   *    payload, so they cannot be changed from here at all. Both remain the
+   *    Super Admin's to change, through their own existing flows.
+   */
+  const handleUpdateOwnProfile = (updated: UserMember) => {
+    setUsers(prev =>
+      prev.map(u =>
+        u.id === currentUserId ? { ...updated, id: u.id, role: u.role, organization: u.organization } : u
+      )
+    );
+  };
+
   const handleUpdateUser = (updatedUser: UserMember) => {
     setUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
     setSelectedUserDetails(updatedUser);
@@ -646,6 +667,8 @@ export default function App() {
           onToggleCollapse={() => setSidebarCollapsed(prev => !prev)}
           role={currentRole}
           canManageOrganization={isOrgOwner}
+          currentUser={currentUser}
+          onEditProfile={() => setIsEditProfileOpen(true)}
           onSwitchRole={handleSwitchRole}
           sidebarMode={sidebarMode}
           onToggleSidebarMode={() => setSidebarMode(prev => (prev === 'dark' ? 'light' : 'dark'))}
@@ -862,6 +885,18 @@ export default function App() {
         onInviteUser={handleSuperAdminCreateUser}
         onShowToast={showToast}
       />
+
+      {currentUser && (
+        <EditUserDrawer
+          isOpen={isEditProfileOpen}
+          user={currentUser}
+          selfEdit
+          organizationName={currentOrg?.name}
+          onClose={() => setIsEditProfileOpen(false)}
+          onSave={handleUpdateOwnProfile}
+          onShowToast={showToast}
+        />
+      )}
 
       <NewOrganizationModal
         isOpen={isOrgModalOpen}
