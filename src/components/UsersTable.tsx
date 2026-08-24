@@ -1,3 +1,4 @@
+import { displayRole } from '../data/initialData';
 import React, { useMemo, useState } from 'react';
 import { Organization, UserMember } from '../types';
 import { UserAvatar } from './UserAvatar';
@@ -29,8 +30,6 @@ interface UsersTableProps {
   /** Shown under the table when `users` is empty. */
   emptyMessage?: string;
 }
-
-const displayRole = (role: string) => (role === 'Manager' ? 'Manager' : role);
 
 /**
  * The single users table — every row, action menu, edit drawer, and

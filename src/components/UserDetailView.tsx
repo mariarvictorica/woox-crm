@@ -3,7 +3,7 @@ import { UserMember, Opportunity, Contact, StageKey, ViewType, Organization } fr
 import { UserAvatar } from './UserAvatar';
 import { EditUserDrawer } from './EditUserDrawer';
 import { ConfirmDialog } from './ConfirmDialog';
-import { STAGE_LABEL, formatMoney } from '../data/initialData';
+import { STAGE_LABEL, formatMoney, displayRole } from '../data/initialData';
 
 interface UserDetailViewProps {
   user: UserMember;
@@ -229,7 +229,7 @@ export const UserDetailView: React.FC<UserDetailViewProps> = ({
                     padding: '3px 10px'
                   }}
                 >
-                  {user.role}
+                  {displayRole(user.role)}
                 </span>
               </div>
               {/* Subtitle with position, organization and email */}
@@ -553,7 +553,7 @@ export const UserDetailView: React.FC<UserDetailViewProps> = ({
                         <div className="ftext">
                           <div className="k">Rol en el equipo</div>
                           <div className="v" style={{ fontWeight: 700, color: user.role === 'Manager' ? 'var(--orange)' : 'var(--accent)' }}>
-                            {user.role}
+                            {displayRole(user.role)}
                           </div>
                         </div>
                       </div>
@@ -775,7 +775,7 @@ export const UserDetailView: React.FC<UserDetailViewProps> = ({
                   <option value="">Seleccioná un usuario</option>
                   {ownerHandoffCandidates.map(u => (
                     <option key={u.id} value={u.id}>
-                      {u.name} ({u.role}) — {u.position || 'Sin puesto'}
+                      {u.name} ({displayRole(u.role)}) — {u.position || 'Sin puesto'}
                     </option>
                   ))}
                 </select>
@@ -829,7 +829,7 @@ export const UserDetailView: React.FC<UserDetailViewProps> = ({
                   <option value="">Conservar sin transferir por ahora</option>
                   {availableTransferUsers.map(u => (
                     <option key={u.id} value={u.id}>
-                      {u.name} ({u.role}) — {u.position || 'Asesor'}
+                      {u.name} ({displayRole(u.role)}) — {u.position || 'Asesor'}
                     </option>
                   ))}
                 </select>
@@ -891,7 +891,7 @@ export const UserDetailView: React.FC<UserDetailViewProps> = ({
                   <option value="">Seleccioná un usuario</option>
                   {ownerHandoffCandidates.map(u => (
                     <option key={u.id} value={u.id}>
-                      {u.name} ({u.role}) — {u.position || 'Sin puesto'}
+                      {u.name} ({displayRole(u.role)}) — {u.position || 'Sin puesto'}
                     </option>
                   ))}
                 </select>
@@ -945,7 +945,7 @@ export const UserDetailView: React.FC<UserDetailViewProps> = ({
                   <option value="">No transferir</option>
                   {availableTransferUsers.map(u => (
                     <option key={u.id} value={u.id}>
-                      {u.name} ({u.role}) — {u.position || 'Asesor'}
+                      {u.name} ({displayRole(u.role)}) — {u.position || 'Asesor'}
                     </option>
                   ))}
                 </select>

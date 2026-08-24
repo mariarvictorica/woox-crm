@@ -1,3 +1,4 @@
+import { displayRole } from '../data/initialData';
 import React, { useEffect, useState } from 'react';
 import { UserMember } from '../types';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -96,7 +97,7 @@ export const OwnerHandoffConfirmDialog: React.FC<OwnerHandoffConfirmDialogProps>
                 <option value="">Seleccioná un usuario</option>
                 {candidates.map(u => (
                   <option key={u.id} value={u.id}>
-                    {u.name} ({u.role}) — {u.position || 'Sin puesto'}
+                    {u.name} ({displayRole(u.role)}) — {u.position || 'Sin puesto'}
                   </option>
                 ))}
               </select>

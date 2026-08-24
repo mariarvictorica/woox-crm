@@ -4,7 +4,7 @@ import { Dialog } from './Dialog';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FormField } from './FormField';
 import { UserFormFields, UserFormValues } from './UserFormFields';
-import { splitPhone } from '../data/initialData';
+import { splitPhone, displayRole } from '../data/initialData';
 
 interface EditUserDrawerProps {
   isOpen: boolean;
@@ -208,7 +208,7 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
                   id="self-edit-role"
                   style={{ fontSize: '13px', color: 'var(--ink-700)', padding: '4px 0' }}
                 >
-                  {user.role}
+                  {displayRole(user.role)}
                 </div>
               </FormField>
 

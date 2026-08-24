@@ -208,7 +208,7 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
           value={repFilter}
           onChange={e => setRepFilter(e.target.value)}
         >
-          <option value="">Todos los reps</option>
+          <option value="">Todos los representantes</option>
           <option value="Maria Torres">Maria Torres</option>
           <option value="Adamaris">Adamaris</option>
           <option value="Diego">Diego</option>
@@ -329,7 +329,7 @@ export const OpportunitiesView: React.FC<OpportunitiesViewProps> = ({
                           onClick={() => handleSort('rep')}
                         >
                           <div className="th-sort-inner">
-                            <span>Rep</span>
+                            <span>Representante Ventas</span>
                             <span className="th-sort-icon">
                               {sortField === 'rep' ? (
                                 sortDirection === 'asc' ? (

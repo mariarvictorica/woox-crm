@@ -1,3 +1,4 @@
+import { displayRole } from '../data/initialData';
 import React, { useState } from 'react';
 import { Organization, UserMember } from '../types';
 import { UserAvatar } from './UserAvatar';
@@ -16,8 +17,6 @@ interface OrgUserDetailViewProps {
   onDeleteUser: (userId: number, newOwnerId?: number) => void;
   onShowToast: (msg: string) => void;
 }
-
-const displayRole = (role: string) => (role === 'Manager' ? 'Manager' : role);
 
 /**
  * Super Admin's view of a single user inside one organization.

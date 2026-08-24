@@ -498,8 +498,21 @@ export const splitPhone = (raw: string): { code: string; number: string } => {
   return { code: '+52', number: value };
 };
 
+/**
+ * How a stored role reads on screen. The value in the data stays short
+ * ('Rep') because eleven comparisons and every filter depend on it; only the
+ * label changes here. Was a one-line helper duplicated in three components,
+ * which is how one of them could have kept saying "Rep" after the others were
+ * updated.
+ */
+export function displayRole(role: string): string {
+  if (role === 'Rep') return 'Representante Ventas';
+  if (role === 'Super Admin (SA)') return 'Super Admin';
+  return role;
+}
+
 export const USER_ROLES_LIST = [
-  { value: 'Rep', label: 'Rep', desc: 'Asesor comercial para atención de leads y oportunidades' },
+  { value: 'Rep', label: 'Representante Ventas', desc: 'Asesor comercial para atención de leads y oportunidades' },
   { value: 'Manager', label: 'Manager', desc: 'Supervisión de equipo, reportes y gestión comercial' }
 ];
 

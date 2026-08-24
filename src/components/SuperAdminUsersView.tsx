@@ -1,3 +1,4 @@
+import { displayRole } from '../data/initialData';
 import React, { useMemo, useState } from 'react';
 import { Organization, UserMember } from '../types';
 import { UsersTable } from './UsersTable';
@@ -18,8 +19,6 @@ interface SuperAdminUsersViewProps {
 
 type StatusFilter = 'all' | 'Activo' | 'Invitado' | 'Inactivo';
 type RoleFilter = 'all' | 'Manager' | 'Rep' | 'Super Admin (SA)';
-
-const displayRole = (role: string) => (role === 'Manager' ? 'Manager' : role);
 
 /**
  * Cross-organization "Usuarios" tab: every user on the platform, so the
@@ -145,7 +144,7 @@ export const SuperAdminUsersView: React.FC<SuperAdminUsersViewProps> = ({
           >
             <option value="all">Todos los roles</option>
             <option value="Manager">{displayRole('Manager')}</option>
-            <option value="Rep">Rep</option>
+            <option value="Rep">Representante Ventas</option>
             <option value="Super Admin (SA)">Super Admin</option>
           </select>
 

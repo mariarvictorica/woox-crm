@@ -1,3 +1,4 @@
+import { displayRole } from '../data/initialData';
 import React, { useState, useMemo } from 'react';
 import { UserMember } from '../types';
 import { UserAvatar } from './UserAvatar';
@@ -155,7 +156,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
           >
             <option value="all">Todos los roles</option>
             <option value="Manager">Manager</option>
-            <option value="Rep">Rep</option>
+            <option value="Rep">Representante Ventas</option>
           </select>
           {searchTerm && (
             <button
@@ -333,7 +334,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
                       color: u.role === 'Super Admin (SA)' ? 'var(--accent)' : u.role === 'Manager' ? 'var(--orange)' : 'var(--ink-800)'
                     }}
                   >
-                    {u.role}
+                    {displayRole(u.role)}
                   </span>
                 </td>
                 <td>
