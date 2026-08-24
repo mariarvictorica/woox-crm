@@ -1,4 +1,4 @@
-import { Contact, Opportunity, UserMember, ActivityEvent, StageKey, Organization, NoteItem, PlatformRole, ViewType } from '../types';
+import { Contact, Opportunity, UserMember, ActivityEvent, StageKey, Organization, NoteItem, PlatformRole, ViewType, DesignSystem } from '../types';
 
 export const INITIAL_CONTACTS: Contact[] = [
   {
@@ -738,6 +738,18 @@ export function getContactsWithoutOpenOpp(contacts: Contact[], opportunities: Op
 export function getStaleContacts(contacts: Contact[], days: number): Contact[] {
   return contacts.filter(c => (c.daysInactive ?? 0) >= days);
 }
+
+/**
+ * The design systems available for side-by-side comparison. The prototype is
+ * a review tool, so all of them stay selectable — switching is a preview, not
+ * a migration. Adding a fourth is one entry here plus its token block in
+ * woox.css; the selector renders this list.
+ */
+export const DESIGN_SYSTEM_OPTIONS: { value: DesignSystem; label: string; description: string }[] = [
+  { value: 'hp', label: 'HP', description: 'El diseño actual del prototipo' },
+  { value: 'dublinks', label: 'Dublinks', description: 'Geist, tinta negra y acento ámbar' },
+  { value: 'seline', label: 'Seline', description: 'Lato sobre papel cálido, acento cian' }
+];
 
 export const PLATFORM_VIEW_OPTIONS: { value: PlatformRole; label: string; landingView: ViewType }[] = [
   { value: 'manager', label: 'Manager', landingView: 'dashboard' },

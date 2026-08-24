@@ -1,11 +1,13 @@
 import React from 'react';
 import { DesignSystem, PlatformRole } from '../types';
 import { DropdownMenu } from './DropdownMenu';
-import { PLATFORM_VIEW_OPTIONS } from '../data/initialData';
+import { PLATFORM_VIEW_OPTIONS, DESIGN_SYSTEM_OPTIONS } from '../data/initialData';
 
 interface TopBannerProps {
   designSystem: DesignSystem;
-  onToggleDesignSystem: () => void;
+  /** Sets the design system outright. Was a two-state toggle; with a third
+   *  option a toggle can no longer express the choice. */
+  onSelectDesignSystem: (system: DesignSystem) => void;
   /** Which panel is being viewed. Sits here rather than in the sidebar so the
    *  top bar owns app-level switching and the sidebar foot owns the account. */
   role: PlatformRole;
@@ -23,13 +25,13 @@ interface TopBannerProps {
  */
 export const TopBanner: React.FC<TopBannerProps> = ({
   designSystem,
-  onToggleDesignSystem,
+  onSelectDesignSystem,
   role,
   onSwitchRole,
   showViewSwitcher = true
 }) => {
-  const isDublinks = designSystem === 'dublinks';
   const currentView = PLATFORM_VIEW_OPTIONS.find(o => o.value === role);
+  const currentSystem = DESIGN_SYSTEM_OPTIONS.find(o => o.value === designSystem);
 
   return (
     <div className="preview-banner" id="preview-banner">
@@ -63,20 +65,31 @@ export const TopBanner: React.FC<TopBannerProps> = ({
         />
         )}
 
-        <div className="design-system-switch" id="design-system-switch">
-          <span className={`design-system-switch-label ${!isDublinks ? 'active' : ''}`}>Diseño actual</span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={isDublinks}
-            aria-label={`Cambiar a ${isDublinks ? 'Diseño actual' : 'Diseño nuevo'}`}
-            className={`design-system-switch-track ${isDublinks ? 'on' : ''}`}
-            onClick={onToggleDesignSystem}
-          >
-            <span className="design-system-switch-knob" />
-          </button>
-          <span className={`design-system-switch-label ${isDublinks ? 'active' : ''}`}>Diseño nuevo</span>
-        </div>
+        <DropdownMenu
+          ariaLabel="Cambiar de sistema de diseño"
+          items={DESIGN_SYSTEM_OPTIONS.map(o => ({
+            label: o.label,
+            selected: o.value === designSystem,
+            onClick: () => onSelectDesignSystem(o.value)
+          }))}
+          renderTrigger={({ isOpen, toggle }) => (
+            <button
+              type="button"
+              id="btn-design-system-switcher"
+              className={`view-switcher-trigger ${isOpen ? 'active' : ''}`}
+              onClick={toggle}
+              aria-haspopup="menu"
+              aria-expanded={isOpen}
+              title={currentSystem?.description}
+            >
+              <span className="view-switcher-label">Diseño</span>
+              <span className="view-switcher-value">{currentSystem?.label || designSystem}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          )}
+        />
       </div>
     </div>
   );

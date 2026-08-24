@@ -775,7 +775,7 @@ export default function App() {
     <div className="app-container" id="woox-app">
       <TopBanner
         designSystem={designSystem}
-        onToggleDesignSystem={() => setDesignSystem(prev => (prev === 'hp' ? 'dublinks' : 'hp'))}
+        onSelectDesignSystem={setDesignSystem}
         role={currentRole}
         onSwitchRole={handleSwitchRole}
         showViewSwitcher={Boolean(session)}

@@ -502,6 +502,176 @@ html[data-sidebar-mode='light'] .sidebar-footer-switchable:hover .role-switch-ic
 }
 
 /* =========================================================================
+   Seline Analytics — third design system, selectable from the top bar.
+   "Quiet analyst's desk on warm paper": a warm-stone canvas with one vivid
+   cyan as the only chromatic voice, Lato at weight 400 throughout, and 1px
+   hairlines as the primary structural device instead of heavy panels.
+
+   Same token surface as the Dublinks block, so coverage is identical and the
+   whole app re-skins from these declarations alone. Values marked "exact" come
+   straight from the reference; "derived" ones are interpolated on its stone
+   scale the way the other themes derive their ramps.
+   ========================================================================= */
+html[data-design-system='seline'] {
+  /* Primary — Cyan Signal is the one filled action colour in the system. */
+  --primary: #3ba6f1; /* Cyan Signal, exact */
+  --primary-bright: #5cb6f4; /* derived: lightened for hover */
+  --primary-deep: #3398e1; /* Cyan Edge, exact */
+  --primary-soft: #c1e1f7; /* Sky Wash, exact */
+  --primary-soft-strong: #a5d5f3; /* derived */
+  --primary-surface: #f2f9fe; /* derived: faintest cyan tint */
+  --on-primary: #ffffff;
+
+  /* Accent — Cyan Edge. The reference is explicit that this is for outlined
+     borders and linked labels and must not be promoted to the filled CTA. */
+  --accent: #3398e1;
+  --accent-hover: #2b86c9; /* derived */
+  --accent-soft: #c1e1f7; /* Sky Wash */
+  --accent-soft-2: rgba(51, 152, 225, 0.16);
+  --accent-ring: rgba(59, 166, 241, 0.22);
+  /* No second chromatic voice is permitted, so "secondary" is a warm neutral. */
+  --secondary: #78716c;
+
+  --link: #3398e1;
+  --link-pressed: #2b86c9; /* derived */
+
+  /* Ink & text — the warm stone scale. */
+  --ink: #0c0a09; /* Ink Black, exact */
+  --ink-900: #0c0a09;
+  --ink-800: #1c1917; /* Soot, exact */
+  --ink-700: #44403c; /* derived: stone-700 */
+  --ink-500: #78716c; /* Warm Gray, exact */
+  --ink-300: #a8a29e; /* Ash Gray, exact */
+  --ink-deep: #000000;
+  --ink-soft: #1c1917;
+  --on-ink: #ffffff;
+  --charcoal: #1c1917;
+  --graphite: #78716c;
+
+  /* Surfaces — white cards on warm paper, never the other way round. */
+  --canvas: #fafaf9; /* Stone Canvas, exact */
+  --paper: #ffffff;
+  --surface: #ffffff;
+  --cloud: #f5f5f4; /* derived: stone-100 hover tint */
+  --fog: #e8e6e5; /* Stone Border, exact */
+  --steel: #d6d3d1; /* Stone Muted, exact */
+
+  /* Borders — the reference calls hairlines "the primary structural device". */
+  --hairline: #e8e6e5;
+  --hairline-strong: #d6d3d1;
+  --border: #e8e6e5;
+  --border-soft: #f0efee; /* derived: lighter than Stone Border */
+
+  /* Bloom ramp (the priority star tag). The reference forbids new accents,
+     but this app needs the tag to read as an accent rather than as body text,
+     so it uses the warmest non-cyan hue that still sits on the stone scale. */
+  --bloom-coral: #c2410c;
+  --bloom-rose: #fdf0ec; /* derived */
+  --bloom-deep: #9a3412; /* derived */
+  --bloom-wine: #7c2d12; /* derived */
+
+  /* Storm ramp (the "Online" origin badge) — folded into the cyan, since cyan
+     is the system's only blue. */
+  --storm-mist: #a5d5f3;
+  --storm-sea: #5cb6f4;
+  --storm-deep: #3398e1;
+  --storm-soft: #c1e1f7;
+  --storm-surface: #f2f9fe;
+
+  /* Functional semantics. The reference explicitly rules out green and red
+     ("adding green, purple, or red breaks the editorial restraint") — but a
+     CRM cannot show Ganado vs Perdido, or a validation error, without them.
+     Same deviation the Dublinks theme had to make. Kept deliberately muted
+     and warm so they read as status, not as a competing accent. */
+  --good: #15803d;
+  --good-bg: rgba(21, 128, 61, 0.07);
+  --good-bright: #16a34a;
+  --good-deep: #166534;
+  --good-soft: #d1e7d8;
+  --good-surface: #f4faf6;
+
+  --warn: #b45309;
+  --warn-bg: rgba(180, 83, 9, 0.07);
+  --warn-bright: #d97706;
+  --warn-deep: #92400e;
+  --warn-deepest: #78350f;
+  --warn-ink: #78350f;
+  --warn-soft: #fdf3e3;
+  --warn-soft-strong: #f7e3c4;
+  --warn-border: #edd0a4;
+  --warn-surface: #fdfbf7;
+  --warn-surface-hover: #fbf7f0;
+  --warn-ring: rgba(180, 83, 9, 0.12);
+  --warn-ring-strong: rgba(180, 83, 9, 0.15);
+  --warn-ring-strongest: rgba(180, 83, 9, 0.25);
+
+  --crit: #b91c1c;
+  --crit-bg: rgba(185, 28, 28, 0.07);
+  --crit-bright: #dc2626;
+  --crit-deep: #991b1b;
+  --crit-surface: #fdf7f6;
+
+  --info: #3398e1;
+  --info-bg: #eaf5fd;
+
+  --orange: #ea7c3c; /* derived: muted, kept clear of the cyan CTA */
+  --orange-bg: rgba(234, 124, 60, 0.08);
+
+  /* Radii — the reference's own named scale: icons 4, inputs 6, cards 10,
+     feature cards 16, tags and buttons fully round. */
+  --r-xs: 2px;
+  --r-sm: 4px; /* icons, exact */
+  --r-md: 6px; /* inputs, exact */
+  --r-lg: 10px; /* cards, exact */
+  --r-xl: 16px; /* feature-card, exact */
+  --r-pill: 9999px;
+  --r-full: 9999px;
+
+  /* Shadows — the reference's four elevations, mapped by weight. */
+  --shadow-soft: rgba(0, 0, 0, 0.05) 0px 4px 16px 0px; /* md, exact */
+  --shadow-modal: rgba(17, 12, 46, 0.12) 0px 12px 45px 0px; /* xl, exact */
+  --shadow-dropdown: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.1) 0px 2px 4px -2px; /* sm, exact */
+  --shadow-primary-glow: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px; /* subtle, exact */
+  --shadow-brand-mark: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+
+  /* Typography — Lato alone carries display and body. The reference is
+     explicit that introducing a second family breaks the hierarchy. */
+  --font-ui: 'Lato', 'Helvetica Neue', Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Lato', 'Helvetica Neue', Arial, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Pill buttons are the system's most recognisable structural move, and radius
+   on .btn is hardcoded rather than tokenised, so tokens alone can't express
+   it. Casing too: HP force-uppercases every button, which contradicts the
+   editorial restraint — the JSX labels are already sentence case underneath. */
+html[data-design-system='seline'] .btn {
+  border-radius: var(--r-pill);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* "Never bump to 600/700 for emphasis — rely on size and the highlight
+   instead." Hierarchy comes from scale and tracking, not weight. */
+html[data-design-system='seline'] .page-head h1,
+html[data-design-system='seline'] .dialog-title,
+html[data-design-system='seline'] .manager-dash-titles h1,
+html[data-design-system='seline'] .detail-title h1 {
+  font-weight: 400;
+  letter-spacing: -0.025em;
+}
+
+/* "Focus ring: 2px #3ba6f1" — one clean cyan ring, no blurred glow. */
+html[data-design-system='seline'] .field-group input:focus,
+html[data-design-system='seline'] .field-group select:focus,
+html[data-design-system='seline'] .field-group textarea:focus,
+html[data-design-system='seline'] input:focus,
+html[data-design-system='seline'] select:focus,
+html[data-design-system='seline'] textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--accent-ring);
+}
+
+/* =========================================================================
    Base & Typography (Forma DJR Micro / Manrope Style)
    ========================================================================= */
 * {
@@ -578,52 +748,6 @@ svg {
   align-items: center;
   gap: 14px;
 }
-.design-system-switch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.design-system-switch-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
-  transition: color 0.15s var(--ease);
-  white-space: nowrap;
-}
-.design-system-switch-label.active {
-  color: var(--on-ink);
-  font-weight: 700;
-}
-.design-system-switch-track {
-  position: relative;
-  width: 34px;
-  height: 18px;
-  border-radius: var(--r-pill);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.12);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.18s var(--ease), border-color 0.18s var(--ease);
-}
-.design-system-switch-track.on {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.design-system-switch-knob {
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  transition: transform 0.18s var(--ease);
-}
-.design-system-switch-track.on .design-system-switch-knob {
-  transform: translateX(16px);
-}
-
 .app {
   display: flex;
   min-height: calc(100vh - 35px);

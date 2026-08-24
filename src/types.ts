@@ -113,9 +113,10 @@ export interface Session {
   role: PlatformRole;
 }
 
-/** Which token set the app renders with — see woox.css's
- *  html[data-design-system='dublinks'] block and TopBanner.tsx's switch. */
-export type DesignSystem = 'hp' | 'dublinks';
+/** Which token set the app renders with. Each value beyond 'hp' has its own
+ *  html[data-design-system='...'] block in woox.css redefining the palette;
+ *  'hp' is the baseline declared on :root. Selected from TopBanner. */
+export type DesignSystem = 'hp' | 'dublinks' | 'seline';
 
 /** Independent of DesignSystem — combinable with either token set. See
  *  woox.css's html[data-sidebar-mode='light'] block. */
