@@ -70,9 +70,12 @@ export default function App() {
   const [organizations, setOrganizations] = useState<Organization[]>(INITIAL_ORGANIZATIONS);
 
   const [currentRole, setCurrentRole] = useState<PlatformRole>('manager');
-  // Who is signed in. State rather than a constant so the sign-in flow can
-  // just write it; every derived value below follows automatically.
-  const [currentUserId] = useState<number>(CURRENT_USER_ID);
+  // Who is signed in. A plain binding for now: the sign-in flow will turn this
+  // into state and write it, but holding it in state today buys nothing (the
+  // setter has no caller) and costs a real trap — useState only reads its
+  // initial value on mount, so HMR keeps a stale user after CURRENT_USER_ID
+  // changes, and the app silently disagrees with the source.
+  const currentUserId = CURRENT_USER_ID;
   // Defaults to 'hp' on every load, deliberately not persisted beyond the
   // session (no localStorage) — nobody should land in the experimental
   // theme by accident on a fresh visit.
