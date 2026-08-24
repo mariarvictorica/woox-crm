@@ -21,8 +21,6 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
 
-  const currentOrganization = users[0]?.organization || 'Woox Pinturas y Acabados S.A. de C.V.';
-
   const handleSort = (field: UserSortField) => {
     if (sortField !== field) {
       setSortField(field);
@@ -88,29 +86,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
     <section id="view-users" className="view active">
       <div className="page-head" id="users-head">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '3px' }}>
-            <h1>Usuarios</h1>
-            <span
-              id="users-org-badge"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '3px 9px',
-                borderRadius: 'var(--r-sm)',
-                background: 'var(--canvas)',
-                border: '1px solid var(--border)',
-                fontSize: '11.5px',
-                fontWeight: 600,
-                color: 'var(--ink-700)'
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4M9 7h6M9 11h6M9 15h6" />
-              </svg>
-              {currentOrganization}
-            </span>
-          </div>
+          <h1>Usuarios</h1>
           <p>Equipo comercial</p>
         </div>
         <div className="head-actions">
