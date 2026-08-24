@@ -358,24 +358,6 @@ html[data-design-system='dublinks'] .dialog-title {
   font-weight: 600; /* Satoshi's documented Inter substitute is weight 600 */
 }
 
-/* CTA casing — Dublinks calls for sentence case ("Add contact", not
-   "ADD CONTACT"). HP force-uppercases every button through .btn's own
-   text-transform (and .btn-priority-toggle's, which also carries the .btn
-   class and so inherits this override too) — the JSX labels themselves
-   ("Nuevo contacto", "Guardar cambios", "Crear oportunidad", audited
-   across every component) are already written in correct sentence case,
-   HP's CSS is what's forcing them to uppercase. So this only needs to
-   stop that transform, not re-case anything: text-transform: none reveals
-   the real label exactly as authored, including any future acronym or
-   proper noun (an explicit lowercase+first-letter CSS trick would
-   instead force something like "PDF" to "pdf", which is wrong — see the
-   task's own acronym exception). Scoped to .btn so it automatically
-   covers every current and future button using the shared class, with no
-   per-button edits. */
-html[data-design-system='dublinks'] .btn {
-  text-transform: none;
-  letter-spacing: normal;
-}
 
 /* Active-state stroke for inputs/selects/textareas — Dublinks calls for
    one clean accent-colored line matching the control's existing radius,
@@ -760,8 +742,6 @@ html[data-design-system='seline'] .won-date-badge {
    editorial restraint — the JSX labels are already sentence case underneath. */
 html[data-design-system='seline'] .btn {
   border-radius: var(--r-pill);
-  text-transform: none;
-  letter-spacing: normal;
 }
 
 /* "Never bump to 600/700 for emphasis — rely on size and the highlight
@@ -1393,9 +1373,10 @@ main {
   border-radius: var(--r-md); /* 4px */
   border: 1px solid transparent;
   font-weight: 600;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
+  /* 14px across every variant. The small sizes were dropping to 11.5 and 11px,
+     which is where button labels stopped being comfortably readable. The
+     variants below still differ in box, not in type size. */
+  font-size: 14px;
   cursor: pointer;
   white-space: nowrap;
   transition: transform 0.08s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
@@ -1411,10 +1392,6 @@ main {
   color: var(--on-primary);
   border-color: var(--primary);
   box-shadow: 0 1px 3px rgba(2, 74, 216, 0.25);
-  /* One step up from .btn's 13px. The size variants below still win for
-     .btn-sm / .btn-xs, since they come later at equal specificity — a small
-     primary stays small, which is the point of having the variants. */
-  font-size: 14px;
 }
 .btn-primary:hover {
   background: var(--primary-deep);
@@ -1501,15 +1478,15 @@ main {
 .btn-sm {
   padding: 7px 14px;
   height: 34px;
-  font-size: 11.5px;
-  letter-spacing: 0.5px;
+  font-size: 14px;
   border-radius: var(--r-md);
 }
 .btn-xs {
   padding: 5px 10px;
-  height: 28px;
-  font-size: 11px;
-  letter-spacing: 0.4px;
+  /* 30px, not 28: at 14px the text box is 16.8px and the old height left only
+     16px of room once padding and border were taken out. */
+  height: 30px;
+  font-size: 14px;
   border-radius: var(--r-sm);
 }
 
@@ -6103,10 +6080,9 @@ textarea#lost-modal-reason {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--charcoal);
-  font-size: 12px;
+  /* No size of its own: it ships as `btn btn-sm btn-priority-toggle`, so it
+     inherits the shared 14px and stays in step with every other button. */
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.15s var(--ease);
   line-height: 1.2;

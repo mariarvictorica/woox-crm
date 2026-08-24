@@ -351,7 +351,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           <button
             type="button"
             className="btn btn-ghost btn-sm"
-            style={{ color: 'var(--warn-deep)', padding: '2px 8px', height: '26px', fontSize: '12px', background: 'var(--warn-soft)', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+            style={{ color: 'var(--warn-deep)', background: 'var(--warn-soft)', borderRadius: '4px', border: 'none' }}
             onClick={() => setFilters(prev => ({ ...prev, opportunity: 'all' }))}
           >
             Quitar filtro
@@ -412,7 +412,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => setFilters(DEFAULT_FILTERS)}
-            style={{ color: 'var(--ink-500)', fontSize: '12px' }}
+            style={{ color: 'var(--ink-500)' }}
           >
             Limpiar filtros
           </button>

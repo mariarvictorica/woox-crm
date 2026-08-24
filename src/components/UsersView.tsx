@@ -163,7 +163,7 @@ export const UsersView: React.FC<UsersViewProps> = ({ users, onInviteUser, onSel
               type="button"
               className="btn btn-ghost btn-sm"
               onClick={() => setSearchTerm('')}
-              style={{ fontSize: '11.5px', padding: '4px 8px' }}
+              style={{ padding: '4px 8px' }}
             >
               Limpiar
             </button>
