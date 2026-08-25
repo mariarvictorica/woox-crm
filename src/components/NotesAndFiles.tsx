@@ -22,23 +22,20 @@ function formatFileSize(bytes: number): string {
 }
 
 interface NotesAndFilesProps {
-  /** Already scoped by the caller: every note for a contact, or only the
-   *  notes tagged to one specific opportunity. This component doesn't
-   *  re-derive that scope, only (in contact mode) offers a lighter filter
-   *  on top of it. */
+  /** Every note for the contact. Both callers pass the same scope — the
+   *  section reads identically from a contact and from one of its
+   *  opportunities — and the filter below narrows it from there. */
   notes: NoteItem[];
   contactId: number;
-  /** Set only from an Opportunity detail view. When present, the
-   *  opportunity tag selector and the contact-mode filter are both hidden,
-   *  and every new note is tagged with this id automatically — the context
-   *  already answers "which opportunity", so there's nothing to ask the
-   *  user. */
-  fixedOpportunityId?: number;
-  /** The contact's opportunities, used to (a) populate the composer's
-   *  optional tag selector in contact mode, (b) resolve an opportunity id
-   *  to its display name for the tag pill, and (c) populate the
-   *  contact-mode filter dropdown. In opportunity mode, callers only need
-   *  to pass that one opportunity (for name lookup on the tag). */
+  /** Which opportunity the composer starts tagged with, set by the
+   *  Opportunity detail view so a note written there lands on that
+   *  opportunity without asking. It is only an initial value: the tag
+   *  selector stays available and the reader can retag or clear it. */
+  defaultOpportunityId?: number;
+  /** The contact's opportunities: they populate the composer's tag
+   *  selector and the history filter, resolve an id to its display name,
+   *  and — via getOpportunityColorIndex — decide each tag's colour, which
+   *  is why every caller has to pass the same full list. */
   relatedOpportunities: Opportunity[];
   onAddNote: (note: NoteItem) => void;
   onUpdateNote: (noteId: string, updates: Partial<NoteItem>) => void;
@@ -63,7 +60,7 @@ interface NotesAndFilesProps {
 export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
   notes,
   contactId,
-  fixedOpportunityId,
+  defaultOpportunityId,
   relatedOpportunities,
   onAddNote,
   onUpdateNote,
@@ -72,10 +69,10 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
   onShowToast,
   currentUserName
 }) => {
-  const isOpportunityScoped = fixedOpportunityId != null;
-
   const [noteText, setNoteText] = useState('');
-  const [noteOppId, setNoteOppId] = useState<number | ''>('');
+  // Starts on the opportunity the section was opened from, when there is
+  // one. Not a lock: the selector is rendered either way.
+  const [noteOppId, setNoteOppId] = useState<number | ''>(defaultOpportunityId ?? '');
   const [pendingAttachments, setPendingAttachments] = useState<NoteAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const editFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -87,7 +84,7 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
   const [deletingNote, setDeletingNote] = useState<NoteItem | null>(null);
   const noteMenuRef = useRef<HTMLDivElement | null>(null);
 
-  // Contact-mode-only quick filter over the already-merged note list. A
+  // Quick filter over the merged note list, available from both callers. A
   // searchable dropdown scales to any number of opportunities, unlike the
   // pill row it replaced.
   const [filterOppId, setFilterOppId] = useState('');
@@ -120,9 +117,8 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openMenuNoteId, isPolicyPopoverOpen]);
 
-  const visibleNotes = isOpportunityScoped
-    ? notes
-    : filterOppId === ''
+  const visibleNotes =
+    filterOppId === ''
     ? notes
     : filterOppId === 'general'
     ? notes.filter(n => n.opportunityId == null)
@@ -164,7 +160,7 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
     const newNote: NoteItem = {
       id: 'note-' + now,
       contactId,
-      opportunityId: isOpportunityScoped ? fixedOpportunityId : noteOppId === '' ? undefined : noteOppId,
+      opportunityId: noteOppId === '' ? undefined : noteOppId,
       author: currentUserName,
       initials: 'EM',
       time: 'justo ahora',
@@ -175,7 +171,9 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
     };
     onAddNote(newNote);
     setNoteText('');
-    setNoteOppId('');
+    // Back to the default rather than blank, or a second note written in a
+    // row would silently lose the opportunity the first one got.
+    setNoteOppId(defaultOpportunityId ?? '');
     setPendingAttachments([]);
     onShowToast('Nota guardada con éxito. Tienes 24 horas para editarla o eliminarla.');
   };
@@ -263,7 +261,11 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
               )}
             </div>
           </div>
-          <span style={{ fontSize: '11px', color: 'var(--ink-500)' }}>{notes.length} notas</span>
+          {/* Follows the filter: the header used to report the whole list even
+              when the history below showed a subset. */}
+          <span style={{ fontSize: '11px', color: 'var(--ink-500)' }}>
+            {visibleNotes.length} {visibleNotes.length === 1 ? 'nota' : 'notas'}
+          </span>
         </div>
 
         {/* Note Composer */}
@@ -320,7 +322,7 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
 
             {/* Only asked when the context doesn't already answer it — from
                 inside an Opportunity, every new note is auto-tagged instead. */}
-            {!isOpportunityScoped && relatedOpportunities.length > 0 && (
+            {relatedOpportunities.length > 0 && (
               <select
                 id="notes-and-files-opp-select"
                 value={noteOppId}
@@ -388,7 +390,7 @@ export const NotesAndFiles: React.FC<NotesAndFilesProps> = ({
         {/* Contact-mode filter: a searchable dropdown instead of a pill row
             so it stays usable no matter how many opportunities the contact
             has. */}
-        {!isOpportunityScoped && relatedOpportunities.length > 0 && (
+        {relatedOpportunities.length > 0 && (
           <div id="notes-filter-select" style={{ marginTop: '10px', maxWidth: '260px' }}>
             <SearchableSelect
               options={[

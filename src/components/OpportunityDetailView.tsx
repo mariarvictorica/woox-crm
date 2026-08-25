@@ -24,6 +24,10 @@ function parseToDateInput(val?: string): string {
 
 interface OpportunityDetailViewProps {
   opportunity: Opportunity;
+  /** Every opportunity, so the notes section can offer the contact's other
+   *  ones as tag targets and colour each tag consistently with the contact
+   *  view. */
+  opportunities: Opportunity[];
   contact: Contact | undefined;
   contacts?: Contact[];
   notes: NoteItem[];
@@ -110,6 +114,7 @@ function generateSuggestedReply(
 
 export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   opportunity,
+  opportunities,
   contact,
   contacts = [],
   notes: allNotes,
@@ -133,10 +138,11 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   const [editableResponseText, setEditableResponseText] = useState('');
   const [variantIndex, setVariantIndex] = useState(0);
 
-  // Opportunity view shows only the notes tagged to this specific
-  // opportunity — contact-level notes and notes from the contact's other
-  // opportunities stay out of scope here.
-  const notes = allNotes.filter(n => n.opportunityId === opportunity.id);
+  // The contact's whole note history, same as the contact view: this section
+  // is the same one, and its filter narrows from here. The composer still
+  // starts tagged with this opportunity.
+  const notes = allNotes.filter(n => n.contactId === opportunity.contactId);
+  const relatedOpps = opportunities.filter(o => o.contactId === opportunity.contactId);
 
   const [aiQuestion, setAiQuestion] = useState('');
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
@@ -308,6 +314,10 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   // NotesAndFiles component intentionally knows nothing about.
   const handleAddNoteWithTimeline = (note: NoteItem) => {
     onAddNote(note);
+    // Only this opportunity's timeline. The composer can now tag a note to
+    // another of the contact's opportunities, or to none, and those do not
+    // belong in this log.
+    if (note.opportunityId !== opportunity.id) return;
     const newEvent: ActivityEvent = {
       id: 'tl-' + Date.now(),
       initial: 'EM',
@@ -320,7 +330,11 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
   };
 
   const handleDeleteNoteWithTimeline = (noteId: string) => {
+    // Read the note before it goes: after the delete there is nothing left
+    // to tell whether it belonged to this opportunity.
+    const deleted = allNotes.find(n => n.id === noteId);
     onDeleteNote(noteId);
+    if (deleted?.opportunityId !== opportunity.id) return;
     const newEvent: ActivityEvent = {
       id: 'tl-' + Date.now(),
       initial: 'EM',
@@ -716,8 +730,8 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
             currentUserName={currentUserName}
             notes={notes}
             contactId={opportunity.contactId}
-            fixedOpportunityId={opportunity.id}
-            relatedOpportunities={[opportunity]}
+            defaultOpportunityId={opportunity.id}
+            relatedOpportunities={relatedOpps}
             onAddNote={handleAddNoteWithTimeline}
             onUpdateNote={onUpdateNote}
             onDeleteNote={handleDeleteNoteWithTimeline}
@@ -740,7 +754,7 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
               </span>
             </div>
             <p style={{ fontSize: '12px', color: 'var(--ink-500)', marginBottom: '12px' }}>
-              La IA tiene acceso a las notas, archivos y línea de tiempo de esta oportunidad.
+              La IA tiene acceso a las notas y archivos del contacto y a la línea de tiempo de esta oportunidad.
             </p>
             <div className="ask-chip-grid">
               <div className="chip" onClick={() => handleAskAI('Resumir en 3 puntos')}>

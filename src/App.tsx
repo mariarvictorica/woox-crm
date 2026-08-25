@@ -935,6 +935,7 @@ export default function App() {
             <OpportunityDetailView
               currentUserName={currentUser?.name || ''}
               opportunity={currentOpp}
+              opportunities={opportunities}
               contact={oppContact}
               contacts={contacts}
               notes={notes}
