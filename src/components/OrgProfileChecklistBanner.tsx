@@ -9,9 +9,19 @@ interface OrgProfileChecklistBannerProps {
   /** Called with a field key to jump straight to it, or with nothing for the
    *  general CTA. */
   onComplete: (field?: OrgProfileFieldKey) => void;
+  /**
+   * Which organization this notice belongs to. The collapsed state is stored
+   * per organization: on one global key, collapsing it as one Owner left the
+   * next Owner's notice already folded, hiding that they had data pending.
+   */
+  scopeId?: number | string;
 }
 
-const STORAGE_KEY = 'org-profile-banner-collapsed';
+const STORAGE_PREFIX = 'org-profile-banner-collapsed';
+
+/** Unscoped callers keep the old key, so nothing silently forgets its state. */
+const storageKeyFor = (scopeId?: number | string) =>
+  scopeId === undefined ? STORAGE_PREFIX : `${STORAGE_PREFIX}:${scopeId}`;
 
 /**
  * The nudge an Owner sees after the Super Admin onboards their organization
@@ -25,11 +35,19 @@ const STORAGE_KEY = 'org-profile-banner-collapsed';
 export const OrgProfileChecklistBanner: React.FC<OrgProfileChecklistBannerProps> = ({
   missing,
   total,
-  onComplete
+  onComplete,
+  scopeId
 }) => {
-  const [collapsed, setCollapsed] = useState<boolean>(
-    () => localStorage.getItem(STORAGE_KEY) === 'true'
-  );
+  const storageKey = storageKeyFor(scopeId);
+  // Reading in the initializer, so the first paint is already in the right
+  // state. Guarded because a browser with site data blocked throws here.
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(storageKey) === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   const completed = total - missing.length;
   if (missing.length === 0) return null;
@@ -37,7 +55,11 @@ export const OrgProfileChecklistBanner: React.FC<OrgProfileChecklistBannerProps>
   const toggle = () => {
     setCollapsed(prev => {
       const next = !prev;
-      localStorage.setItem(STORAGE_KEY, String(next));
+      try {
+        localStorage.setItem(storageKey, String(next));
+      } catch {
+        // A collapsed banner that forgets is a nuisance, not a failure.
+      }
       return next;
     });
   };

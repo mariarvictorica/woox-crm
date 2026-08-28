@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   Contact,
   Opportunity,
@@ -25,7 +25,12 @@ import {
   STAGE_LABEL,
   PLATFORM_VIEW_OPTIONS,
   PLATFORM_CAPABILITIES,
-  SIGN_IN_VARIANTS
+  SIGN_IN_VARIANTS,
+  DEMO_PASSWORD,
+  platformRoleFor,
+  getUserMissingFields,
+  USER_PROFILE_FIELDS,
+  SHOW_DEMO_TOOLS
 } from './data/initialData';
 import type { OrgProfileFieldKey } from './data/initialData';
 import { TopBanner } from './components/TopBanner';
@@ -46,6 +51,7 @@ import { NewOrganizationModal, NewOrganizationInput } from './components/NewOrga
 import { InviteUserDrawer } from './components/InviteUserDrawer';
 import { EditUserDrawer } from './components/EditUserDrawer';
 import { SignInView } from './components/SignInView';
+import { ProfileOnboardingView } from './components/ProfileOnboardingView';
 import { OrgManagementView } from './components/OrgManagementView';
 import { UserDetailView } from './components/UserDetailView';
 import { Toast } from './components/Toast';
@@ -63,6 +69,19 @@ export default function App() {
   // Owner picks one from the Dashboard notice. Consumed once, like
   // pendingOrgEditId.
   const [pendingOrgField, setPendingOrgField] = useState<OrgProfileFieldKey | null>(null);
+  /**
+   * Demo tooling: replay the first-sign-in step for an account whose profile is
+   * already complete. Purely a view state — nothing in `users` is written while
+   * it is on, which is the whole point of it existing.
+   */
+  const [simulatingOnboarding, setSimulatingOnboarding] = useState(false);
+  /**
+   * The other half of the simulation: "Completar después" leaves a reminder on
+   * the Dashboard, and that consequence is part of the flow worth showing. A
+   * complete account has nothing pending, so the reminder has to be simulated
+   * too — still without writing anything to `users`.
+   */
+  const [simulatingProfileBanner, setSimulatingProfileBanner] = useState(false);
   // Which tab OrganizationDetailView should land on next time it mounts —
   // set to 'usuarios' when returning from a user's detail page, so the
   // Super Admin isn't dropped back on the ficha tab.
@@ -155,6 +174,36 @@ export default function App() {
     ? organizations.find(o => o.name === currentUser.organization)
     : undefined;
   const isOrgOwner = Boolean(currentUser && currentOrg && currentOrg.ownerId === currentUser.id);
+
+  /**
+   * An account that was created and has never been used. `status` already
+   * carried this meaning, so nothing new had to be stored to know it — and
+   * because completing or deferring the step moves the account to 'Activo',
+   * the screen shows exactly once per user.
+   */
+  const needsOnboarding = currentUser?.status === 'Invitado';
+
+  /** The real condition, or the demo tooling standing in for it. Kept separate
+   *  from `needsOnboarding` so the business rule above reads unchanged. */
+  const showOnboarding = needsOnboarding || (simulatingOnboarding && SHOW_DEMO_TOOLS);
+
+  /**
+   * The pending half of the current user's profile, or undefined when the
+   * Dashboard notice is not owed — because nothing is missing, or because they
+   * already closed it.
+   *
+   * Computed rather than flagged, so somebody who filled everything in during
+   * onboarding is never nudged.
+   *
+   * The demo tool bypasses both conditions on purpose: it exists to show the
+   * notice using an account that is complete and pre-dismissed.
+   */
+  const ownProfileMissing = useMemo(() => {
+    if (simulatingProfileBanner && SHOW_DEMO_TOOLS) return USER_PROFILE_FIELDS;
+    if (!currentUser || currentUser.profileBannerDismissed) return undefined;
+    const missing = getUserMissingFields(currentUser);
+    return missing.length > 0 ? missing : undefined;
+  }, [currentUser, simulatingProfileBanner]);
   // Everyone in the signed-in user's organization. Filtering by name keeps
   // other tenants' users (and their Owners) out of this org's Usuarios list.
   const orgUsers = users.filter(u => currentOrg && u.organization === currentOrg.name);
@@ -211,6 +260,10 @@ export default function App() {
     // nothing here.
     setSelectedUserDetails(null);
     setPendingOrgField(null);
+    // The simulated step belongs to whoever was being simulated, not to the
+    // person being switched to.
+    setSimulatingOnboarding(false);
+    setSimulatingProfileBanner(false);
 
     // Landing view comes from the option list, so a new panel brings its own
     // and this stays untouched.
@@ -223,27 +276,42 @@ export default function App() {
    * Resolves credentials for one sign-in screen. Returns an error message, or
    * null once the session is open.
    *
-   * Each screen accepts only its own account, which is the whole point of
-   * having three: signing in with the Manager's credentials on the App Admin
-   * screen has to fail, or the separation is decorative.
+   * Each screen accepts only the accounts whose role matches it, which is the
+   * whole point of having three: signing in with the Manager's credentials on
+   * the App Admin screen has to fail, or the separation is decorative.
+   *
+   * Every account in `users` can sign in, not just the three demo ones — a
+   * user invited during a demo has to be able to come in through the front
+   * door, otherwise the invite flow ends at a screen that rejects them.
    */
-  const handleSignIn = (email: string, password: string, role: PlatformRole): string | null => {
+  const handleSignIn = (
+    email: string,
+    password: string,
+    role: PlatformRole,
+    simulateOnboarding = false
+  ): string | null => {
     const variant = SIGN_IN_VARIANTS.find(v => v.role === role);
     if (!variant) return 'Este acceso no está disponible';
 
-    if (email !== variant.demoEmail.toLowerCase()) {
-      const belongsElsewhere = SIGN_IN_VARIANTS.find(v => v.demoEmail.toLowerCase() === email);
-      return belongsElsewhere
-        ? `Esa cuenta entra por el acceso de ${belongsElsewhere.tag}`
-        : 'No encontramos una cuenta con ese correo';
-    }
-    if (password !== variant.demoPassword) return 'La contraseña no es correcta';
-
     const user = users.find(u => u.email.toLowerCase() === email);
     if (!user) return 'No encontramos una cuenta con ese correo';
+
+    const userRole = platformRoleFor(user.role);
+    if (userRole !== role) {
+      const door = SIGN_IN_VARIANTS.find(v => v.role === userRole);
+      return door
+        ? `Esa cuenta entra por el acceso de ${door.tag}`
+        : 'Este acceso no está disponible';
+    }
+
+    if (password !== DEMO_PASSWORD) return 'La contraseña no es correcta';
     if (user.status === 'Inactivo') return 'Esta cuenta está suspendida';
 
     setSession({ userId: user.id, role });
+    // Checked here as well as at the control that offers it, so the mode cannot
+    // be reached in a build that did not ask for the tooling.
+    setSimulatingOnboarding(simulateOnboarding && SHOW_DEMO_TOOLS);
+    setSimulatingProfileBanner(false);
     const landing = PLATFORM_VIEW_OPTIONS.find(o => o.value === role)?.landingView;
     if (landing) setCurrentView(landing);
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -257,6 +325,8 @@ export default function App() {
     setSelectedUserDetails(null);
     setPendingOrgField(null);
     setIsEditProfileOpen(false);
+    setSimulatingOnboarding(false);
+    setSimulatingProfileBanner(false);
   };
 
   const handleCreateOrganization = (input: NewOrganizationInput) => {
@@ -665,9 +735,63 @@ export default function App() {
   const handleUpdateOwnProfile = (updated: UserMember) => {
     setUsers(prev =>
       prev.map(u =>
-        u.id === currentUserId ? { ...updated, id: u.id, role: u.role, organization: u.organization } : u
+        u.id === currentUserId
+          ? { ...updated, id: u.id, role: u.role, organization: u.organization }
+          : u
       )
     );
+    // Filling everything in is deliberately NOT recorded as a dismissal: with
+    // nothing pending the notice hides on its own, and if a field is emptied
+    // again later it is owed once more. Only closing it by hand persists.
+  };
+
+  /** The user closing the notice. A permanent choice — see the field's docs. */
+  const handleDismissProfileBanner = () => {
+    setUsers(prev =>
+      prev.map(u => (u.id === currentUserId ? { ...u, profileBannerDismissed: true } : u))
+    );
+  };
+
+  /**
+   * Marks an account as having actually been used, which is what closes the
+   * onboarding step for good. `status: 'Invitado'` already meant "created,
+   * never entered" — it just had nothing to move it along, so it needed no
+   * new flag of its own.
+   */
+  const markEntered = (user: UserMember): UserMember => ({
+    ...user,
+    status: user.status === 'Invitado' ? 'Activo' : user.status,
+    lastAccess: 'hoy, justo ahora'
+  });
+
+  const handleCompleteOnboarding = (updated: UserMember) => {
+    handleUpdateOwnProfile(markEntered(updated));
+  };
+
+  /**
+   * Lets them in with the profile as it stands. The step is over either way —
+   * it is a first-run screen, not a recurring gate. Nothing has to be recorded:
+   * the Dashboard notice follows from the fields still being empty.
+   */
+  const handleDeferOnboarding = () => {
+    if (!currentUser) return;
+    handleUpdateOwnProfile(markEntered(currentUser));
+  };
+
+  /**
+   * Leaves the simulated step. Takes no payload on purpose: whatever was typed
+   * into the form is dropped, which is what keeps the tester's account exactly
+   * as it was. Lands where the real flow lands — the role's own landing view.
+   */
+  const handleExitSimulatedOnboarding = () => {
+    setSimulatingOnboarding(false);
+    // Both exits, not just "Completar después": the point of the tooling is that
+    // selecting it always shows the notice, so a client sees that half of the
+    // flow too.
+    setSimulatingProfileBanner(true);
+    const landing = PLATFORM_VIEW_OPTIONS.find(o => o.value === currentRole)?.landingView;
+    if (landing) setCurrentView(landing);
+    window.scrollTo({ top: 0, behavior: 'auto' });
   };
 
   const handleUpdateUser = (updatedUser: UserMember) => {
@@ -789,10 +913,33 @@ export default function App() {
             window.location.hash = role;
           }}
           onSignIn={handleSignIn}
+          showDemoTools={SHOW_DEMO_TOOLS}
         />
       )}
 
-      {session && (
+      {/* First sign-in of an invited account. A third mutually exclusive
+          sibling: it replaces the app the way the sign-in screen does, so it
+          reads as a step in getting in rather than a form to dismiss. */}
+      {session && showOnboarding && currentUser && (
+        <ProfileOnboardingView
+          user={currentUser}
+          simulated={simulatingOnboarding}
+          onComplete={
+            simulatingOnboarding
+              ? handleExitSimulatedOnboarding
+              : handleCompleteOnboarding
+          }
+          onSkip={
+            simulatingOnboarding
+              ? handleExitSimulatedOnboarding
+              : handleDeferOnboarding
+          }
+          onLogout={handleLogout}
+          onShowToast={showToast}
+        />
+      )}
+
+      {session && !showOnboarding && (
       <div className="app">
         <Sidebar
           currentView={currentView}
@@ -884,6 +1031,18 @@ export default function App() {
               organization={currentOrg}
               isOrgOwner={capabilities.manageOrganization && isOrgOwner}
               onCompleteOrgProfile={handleCompleteOrgProfile}
+              ownProfileMissing={ownProfileMissing}
+              onCompleteOwnProfile={() => setIsEditProfileOpen(true)}
+              onDismissProfileReminder={() => {
+                // Closing it during a demo only ends the demo. Writing the
+                // dismissal would leave the sample account changed after a
+                // client walkthrough, and the tooling is meant to touch nothing.
+                if (simulatingProfileBanner) {
+                  setSimulatingProfileBanner(false);
+                } else {
+                  handleDismissProfileBanner();
+                }
+              }}
             />
           )}
 
@@ -1046,6 +1205,7 @@ export default function App() {
         isOpen={isOrgModalOpen}
         onClose={() => setIsOrgModalOpen(false)}
         onCreateOrganization={handleCreateOrganization}
+        existingUsers={users}
       />
 
       <Toast message={toastMessage} />

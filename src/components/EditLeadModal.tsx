@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Contact, LeadSource } from '../types';
-import { COUNTRY_CODES, splitPhone } from '../data/initialData';
+import { joinPhone, splitPhone } from '../data/initialData';
 import { Dialog } from './Dialog';
 import { FormField } from './FormField';
+import { TextField } from './TextField';
+import { PhoneField } from './PhoneField';
 
 interface EditLeadModalProps {
   isOpen: boolean;
@@ -116,7 +118,7 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       company: company.trim(),
-      phone: phone.trim() ? `${countryCode} ${phone.trim()}` : '',
+      phone: joinPhone(countryCode, phone) || '',
       email: email.trim(),
       src: originConfig.value,
       srcLabel: originConfig.code,
@@ -151,28 +153,26 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
       }
     >
       <div className="field-row">
-        <FormField label="Nombre" htmlFor="edit-lead-form-firstname" required error={err('firstName')}>
-          <input
-            type="text"
-            id="edit-lead-form-firstname"
-            data-autofocus
-            placeholder="Ej. María"
-            value={firstName}
-            onChange={e => setFirstName(e.target.value)}
-            onBlur={() => handleBlur('firstName')}
-          />
-        </FormField>
+        <TextField
+          label="Nombre"
+          id="edit-lead-form-firstname"
+          value={firstName}
+          onChange={v => setFirstName(v)}
+          onBlur={() => handleBlur('firstName')}
+          placeholder="Ej. María"
+          required
+          autoFocus
+        />
 
-        <FormField label="Apellido" htmlFor="edit-lead-form-lastname" required error={err('lastName')}>
-          <input
-            type="text"
-            id="edit-lead-form-lastname"
-            placeholder="Ej. Fernández"
-            value={lastName}
-            onChange={e => setLastName(e.target.value)}
-            onBlur={() => handleBlur('lastName')}
-          />
-        </FormField>
+        <TextField
+          label="Apellido"
+          id="edit-lead-form-lastname"
+          value={lastName}
+          onChange={v => setLastName(v)}
+          onBlur={() => handleBlur('lastName')}
+          placeholder="Ej. Fernández"
+          required
+        />
       </div>
 
       <FormField label="Origen" required hint="Canal por el que se captó el contacto.">
@@ -202,33 +202,16 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
       <div className="field-section">
         <div className="field-section-label">Datos de contacto</div>
 
-        <FormField label="Teléfono" htmlFor="edit-lead-form-phone" error={err('phone')}>
-          <div className="phone-input-combo">
-            <select
-              id="edit-lead-form-countrycode"
-              aria-label="Código de país"
-              className="phone-country-select"
-              value={countryCode}
-              onChange={e => setCountryCode(e.target.value)}
-            >
-              {COUNTRY_CODES.map(c => (
-                <option key={c.code} value={c.code}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <input
-              type="tel"
-              inputMode="tel"
-              id="edit-lead-form-phone"
-              className="phone-number-input"
-              placeholder="Ej. 55 1234 5678"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              onBlur={() => handleBlur('phone')}
-            />
-          </div>
-        </FormField>
+        <PhoneField
+          id="edit-lead-form-phone"
+          codeId="edit-lead-form-countrycode"
+          countryCode={countryCode}
+          number={phone}
+          onCountryCodeChange={v => setCountryCode(v)}
+          onNumberChange={v => setPhone(v)}
+          onBlur={() => handleBlur('phone')}
+          error={err('phone')}
+        />
 
         <FormField
           label="Correo electrónico"
@@ -251,15 +234,14 @@ export const EditLeadModal: React.FC<EditLeadModalProps> = ({
       <div className="field-section">
         <div className="field-section-label">Cuenta</div>
 
-        <FormField label="Empresa" htmlFor="edit-lead-form-company" hint="Razón social, negocio o despacho.">
-          <input
-            type="text"
-            id="edit-lead-form-company"
-            placeholder="Ej. Constructora del Norte S.A. de C.V."
-            value={company}
-            onChange={e => setCompany(e.target.value)}
-          />
-        </FormField>
+        <TextField
+          label="Empresa"
+          id="edit-lead-form-company"
+          value={company}
+          onChange={v => setCompany(v)}
+          hint="Razón social, negocio o despacho."
+          placeholder="Ej. Constructora del Norte S.A. de C.V."
+        />
 
         <FormField label="Giro comercial" htmlFor="edit-lead-form-giro" hint="Sector o industria de la cuenta.">
           <select id="edit-lead-form-giro" value={giro} onChange={e => setGiro(e.target.value)}>

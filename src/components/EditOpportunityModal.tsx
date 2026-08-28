@@ -3,6 +3,7 @@ import { Contact, Opportunity, StageKey } from '../types';
 import { UserAvatar } from './UserAvatar';
 import { Dialog } from './Dialog';
 import { FormField } from './FormField';
+import { TextField } from './TextField';
 
 interface EditOpportunityModalProps {
   isOpen: boolean;
@@ -163,20 +164,20 @@ export const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
         </>
       }
     >
-      <FormField label="Nombre de la oportunidad" htmlFor="edit-opp-name" required error={err('name')}>
-        <input
-          type="text"
-          id="edit-opp-name"
-          data-autofocus
-          placeholder="Ej. Cotización acabado exterior"
-          value={name}
-          onChange={e => {
-            setName(e.target.value);
-            if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
-          }}
-          onBlur={e => handleBlur('name', e.target.value)}
-        />
-      </FormField>
+      <TextField
+        label="Nombre de la oportunidad"
+        id="edit-opp-name"
+        value={name}
+        onChange={v => {
+          setName(v);
+          if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+        }}
+        onBlur={() => handleBlur('name', name)}
+        error={err('name')}
+        placeholder="Ej. Cotización acabado exterior"
+        required
+        autoFocus
+      />
 
       <FormField label="Contacto asociado" htmlFor="edit-opp-contact-select" required>
         <select
@@ -268,24 +269,20 @@ export const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
       )}
 
       {stage === 'perdido' && (
-        <FormField
+        <TextField
           label="Razón de pérdida"
-          htmlFor="edit-opp-lost-reason"
-          required
+          id="edit-opp-lost-reason"
+          value={lostReason}
+          onChange={v => {
+            setLostReason(v);
+            if (errors.lostReason) setErrors(prev => ({ ...prev, lostReason: '' }));
+          }}
+          onBlur={() => handleBlur('lostReason', lostReason)}
           error={err('lostReason')}
-        >
-          <textarea
-            id="edit-opp-lost-reason"
-            rows={3}
-            placeholder="Ej. Eligió a la competencia por precio."
-            value={lostReason}
-            onChange={e => {
-              setLostReason(e.target.value);
-              if (errors.lostReason) setErrors(prev => ({ ...prev, lostReason: '' }));
-            }}
-            onBlur={e => handleBlur('lostReason', e.target.value)}
-          />
-        </FormField>
+          placeholder="Ej. Eligió a la competencia por precio."
+          rows={3}
+          required
+        />
       )}
     </Dialog>
   );

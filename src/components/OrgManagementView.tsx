@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Organization, UserMember } from '../types';
 import { FormField } from './FormField';
+import { TextField } from './TextField';
+import { PhoneField } from './PhoneField';
 import { UserAvatar } from './UserAvatar';
 import { OrgProfileProgressBar } from './OrgProfileProgressBar';
 import {
-  COUNTRY_CODES,
+  joinPhone,
   EMAIL_RE,
   ORG_PROFILE_FIELDS,
   getOrgMissingFields,
@@ -188,7 +190,7 @@ export const OrgManagementView: React.FC<OrgManagementViewProps> = ({
       taxId: form.taxId.trim().toUpperCase() || undefined,
       address: form.address.trim() || undefined,
       email: form.email.trim() || undefined,
-      phone: form.phone.trim() ? `${form.countryCode} ${form.phone.trim()}` : undefined,
+      phone: joinPhone(form.countryCode, form.phone),
       logoUrl: form.logoUrl || undefined
     };
 
@@ -247,21 +249,16 @@ export const OrgManagementView: React.FC<OrgManagementViewProps> = ({
           className="card"
           style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: '10px' }}
         >
-          <FormField
+          <TextField
             label="Nombre de la organización"
-            htmlFor="org-mgmt-name"
-            required
-            hint="Es el nombre con el que se identifica tu empresa en la plataforma."
+            id="org-mgmt-name"
+            value={form.name}
+            onChange={v => set('name', v)}
             error={errors.name}
-          >
-            <input
-              type="text"
-              id="org-mgmt-name"
-              autoComplete="off"
-              value={form.name}
-              onChange={e => set('name', e.target.value)}
-            />
-          </FormField>
+            hint="Es el nombre con el que se identifica tu empresa en la plataforma."
+            required
+            autoComplete="off"
+          />
 
           <FormField
             label="Owner"
@@ -358,16 +355,14 @@ export const OrgManagementView: React.FC<OrgManagementViewProps> = ({
             <div className="field-section-label">Datos fiscales y de contacto</div>
 
             <div className="field-row">
-              <FormField label="Nombre comercial" htmlFor="org-mgmt-tradeName">
-                <input
-                  type="text"
-                  id="org-mgmt-tradeName"
-              autoComplete="off"
-                  placeholder="Ej. WooX"
-                  value={form.tradeName}
-                  onChange={e => set('tradeName', e.target.value)}
-                />
-              </FormField>
+              <TextField
+                label="Nombre comercial"
+                id="org-mgmt-tradeName"
+                value={form.tradeName}
+                onChange={v => set('tradeName', v)}
+                placeholder="Ej. WooX"
+                autoComplete="off"
+              />
 
               <FormField label="RFC" htmlFor="org-mgmt-taxId">
                 <input
@@ -381,16 +376,14 @@ export const OrgManagementView: React.FC<OrgManagementViewProps> = ({
               </FormField>
             </div>
 
-            <FormField label="Dirección" htmlFor="org-mgmt-address">
-              <input
-                type="text"
-                id="org-mgmt-address"
+            <TextField
+              label="Dirección"
+              id="org-mgmt-address"
+              value={form.address}
+              onChange={v => set('address', v)}
+              placeholder="Ej. Torreón, Coahuila"
               autoComplete="off"
-                placeholder="Ej. Torreón, Coahuila"
-                value={form.address}
-                onChange={e => set('address', e.target.value)}
-              />
-            </FormField>
+            />
 
             <FormField
               label="Correo de la organización"
@@ -408,33 +401,16 @@ export const OrgManagementView: React.FC<OrgManagementViewProps> = ({
               />
             </FormField>
 
-            <FormField label="Teléfono" htmlFor="org-mgmt-phone" error={errors.phone}>
-              <div className="phone-input-combo">
-                <select
-                  id="org-mgmt-countrycode"
-                  aria-label="Código de país"
-                  className="phone-country-select"
-                  value={form.countryCode}
-                  onChange={e => set('countryCode', e.target.value)}
-                >
-                  {COUNTRY_CODES.map(c => (
-                    <option key={c.code} value={c.code}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="tel"
-                  inputMode="tel"
-                  id="org-mgmt-phone"
+            <PhoneField
+              id="org-mgmt-phone"
+              codeId="org-mgmt-countrycode"
+              countryCode={form.countryCode}
+              number={form.phone}
+              onCountryCodeChange={v => set('countryCode', v)}
+              onNumberChange={v => set('phone', v)}
+              error={errors.phone}
               autoComplete="off"
-                  className="phone-number-input"
-                  placeholder="Ej. 871 123 4567"
-                  value={form.phone}
-                  onChange={e => set('phone', e.target.value)}
-                />
-              </div>
-            </FormField>
+            />
 
             <FormField label="Alta en la plataforma" readOnly>
               <div style={{ fontSize: '13px', color: 'var(--ink-700)', padding: '4px 0' }}>

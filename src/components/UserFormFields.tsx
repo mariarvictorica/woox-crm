@@ -1,7 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { UserAvatar } from './UserAvatar';
 import { FormField } from './FormField';
-import { COUNTRY_CODES, USER_ROLES_LIST } from '../data/initialData';
+import { TextField } from './TextField';
+import { PhoneField } from './PhoneField';
+import { USER_ROLES_LIST } from '../data/initialData';
 
 export interface UserFormValues {
   firstName: string;
@@ -32,6 +34,15 @@ interface UserFormFieldsProps {
    * being on screen. Defaults on, leaving every admin-side caller unchanged.
    */
   showRolePicker?: boolean;
+  /**
+   * Off when the account already exists and only its optional half is being
+   * collected — the onboarding step. Name, surname and email were required to
+   * create the account, so re-asking for them would be busywork.
+   */
+  showIdentityFields?: boolean;
+  /** Section heading for the optional block. The default frames it as the
+   *  leftovers of a bigger form, which is wrong when it is the whole form. */
+  optionalSectionLabel?: string;
 }
 
 /**
@@ -51,9 +62,19 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
   idPrefix,
   fallbackInitials,
   fallbackAvatarBg,
-  showRolePicker = true
+  showRolePicker = true,
+  showIdentityFields = true,
+  optionalSectionLabel = 'Datos adicionales'
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  /**
+   * Kept here rather than in the parent's error map: a rejected file never
+   * reaches `values`, so there is nothing for the caller to validate. Both
+   * cases used to fail silently — the file simply did not appear, with no
+   * explanation. Wording matches the organization logo uploader.
+   */
+  const [photoError, setPhotoError] = useState('');
 
   const derivedInitials =
     `${values.firstName ? values.firstName.trim()[0] : ''}${
@@ -67,11 +88,17 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      onChange('avatarUrl', values.avatarUrl); // no-op; error surfaced by caller
+      setPhotoError('El archivo debe ser una imagen válida (JPG, PNG o WebP)');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
-    if (file.size > 5 * 1024 * 1024) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError('La imagen debe pesar menos de 5MB');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
+    setPhotoError('');
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') onChange('avatarUrl', reader.result);
@@ -84,29 +111,29 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
   return (
     <>
       {/* Who they are — required to create the account at all. */}
+      {showIdentityFields && (
+      <>
       <div className="field-row">
-        <FormField label="Nombre" htmlFor={`${idPrefix}-firstname`} required error={err('firstName')}>
-          <input
-            type="text"
-            id={`${idPrefix}-firstname`}
-            data-autofocus
-            placeholder="Ej. Carlos"
-            value={values.firstName}
-            onChange={e => onChange('firstName', e.target.value)}
-            onBlur={() => onBlur('firstName')}
-          />
-        </FormField>
+        <TextField
+          label="Nombre"
+          id={`${idPrefix}-firstname`}
+          value={values.firstName}
+          onChange={v => onChange('firstName', v)}
+          onBlur={() => onBlur('firstName')}
+          placeholder="Ej. Carlos"
+          required
+          autoFocus
+        />
 
-        <FormField label="Apellido" htmlFor={`${idPrefix}-lastname`} required error={err('lastName')}>
-          <input
-            type="text"
-            id={`${idPrefix}-lastname`}
-            placeholder="Ej. Ramírez"
-            value={values.lastName}
-            onChange={e => onChange('lastName', e.target.value)}
-            onBlur={() => onBlur('lastName')}
-          />
-        </FormField>
+        <TextField
+          label="Apellido"
+          id={`${idPrefix}-lastname`}
+          value={values.lastName}
+          onChange={v => onChange('lastName', v)}
+          onBlur={() => onBlur('lastName')}
+          placeholder="Ej. Ramírez"
+          required
+        />
       </div>
 
       <FormField
@@ -126,6 +153,8 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
           onBlur={() => onBlur('email')}
         />
       </FormField>
+      </>
+      )}
 
       {showRolePicker && (
       <FormField label="Nivel de acceso" required error={err('role')}>
@@ -163,53 +192,38 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
 
       {/* Everything below is optional and never blocks the task. */}
       <div className="field-section">
-        <div className="field-section-label">Datos adicionales</div>
+        <div className="field-section-label">{optionalSectionLabel}</div>
 
         <div className="field-row">
-          <FormField label="Puesto" htmlFor={`${idPrefix}-position`}>
-            <input
-              type="text"
-              id={`${idPrefix}-position`}
-              placeholder="Ej. Asesor Comercial Sr."
-              value={values.position}
-              onChange={e => onChange('position', e.target.value)}
-            />
-          </FormField>
+          <TextField
+            label="Puesto"
+            id={`${idPrefix}-position`}
+            value={values.position}
+            onChange={v => onChange('position', v)}
+            placeholder="Ej. Asesor Comercial Sr."
+            autoFocus
+          />
 
-          <FormField label="Teléfono" htmlFor={`${idPrefix}-phone`} error={err('phone')}>
-            <div className="phone-input-combo">
-              <select
-                id={`${idPrefix}-countrycode`}
-                aria-label="Código de país"
-                className="phone-country-select"
-                value={values.countryCode}
-                onChange={e => onChange('countryCode', e.target.value)}
-              >
-                {COUNTRY_CODES.map(c => (
-                  <option key={c.code} value={c.code}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="tel"
-                inputMode="tel"
-                id={`${idPrefix}-phone`}
-                className="phone-number-input"
-                placeholder="Ej. 871 123 4567"
-                value={values.phone}
-                onChange={e => onChange('phone', e.target.value)}
-                onBlur={() => onBlur('phone')}
-              />
-            </div>
-          </FormField>
+          <PhoneField
+            id={`${idPrefix}-phone`}
+            codeId={`${idPrefix}-countrycode`}
+            countryCode={values.countryCode}
+            number={values.phone}
+            onCountryCodeChange={v => onChange('countryCode', v)}
+            onNumberChange={v => onChange('phone', v)}
+            onBlur={() => onBlur('phone')}
+            error={err('phone')}
+          />
         </div>
 
-        <FormField label="Foto de perfil" hint="JPG, PNG o WebP, hasta 5MB.">
+        <FormField label="Foto de perfil" hint="JPG, PNG o WebP, hasta 5MB." error={photoError}>
           <div className="avatar-upload-row">
             <UserAvatar
               name={`${values.firstName} ${values.lastName}`.trim() || 'Usuario'}
               avatarUrl={values.avatarUrl}
+              // The preview mirrors the field, not the directory: without this
+              // clearing a photo still showed the stored one.
+              ignoreStoredPhoto
               initials={derivedInitials}
               avatarBg={fallbackAvatarBg || 'var(--graphite)'}
               size="2xl"
@@ -235,6 +249,7 @@ export const UserFormFields: React.FC<UserFormFieldsProps> = ({
                   className="btn btn-ghost btn-sm"
                   onClick={() => {
                     onChange('avatarUrl', '');
+                    setPhotoError('');
                     if (fileInputRef.current) fileInputRef.current.value = '';
                   }}
                   style={{ color: 'var(--crit)' }}

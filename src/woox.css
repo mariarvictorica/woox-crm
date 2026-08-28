@@ -2006,6 +2006,235 @@ main {
 }
 
 /* =========================================================================
+   First-sign-in profile step — borrows the sign-in screen's layout, since it
+   is the same kind of moment: a full-screen step on the way in rather than a
+   view inside the app.
+   ========================================================================= */
+
+/* Wider than .signin-card: this one holds a .field-row of two columns, which
+   collapses at 560px and would be permanently stacked at the sign-in width. */
+.onboarding-card {
+  max-width: 560px;
+}
+
+/* The bar sits above the form so the count is the first thing read, and the
+   form below it is visibly what moves the number. */
+.onboarding-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.onboarding-progress .stage-track {
+  flex: 1;
+  min-width: 0;
+}
+.onboarding-progress-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-500);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* The onboarding step drops its own "Datos adicionales" framing: here the
+   optional fields are the entire form, so the divider above them would be
+   separating the heading from nothing. */
+#form-profile-onboarding .field-section {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* What "Completar después" leaves on the Dashboard. One line, and quieter
+   than the organization notice above it — a personal detail, not a setup task
+   the organization is waiting on. */
+
+/* Demo-only tooling on the sign-in screen. Dashed and off to the side on
+   purpose: it has to be impossible to mistake for part of signing in. Only
+   rendered when the build asked for it. */
+.demo-tools {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px 14px;
+  border: 1px dashed var(--steel);
+  border-radius: var(--r-md);
+  background: transparent;
+}
+.demo-tools-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-500);
+  margin-bottom: 9px;
+}
+.demo-tools-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  cursor: pointer;
+}
+.demo-tools-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.demo-tools-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.demo-tools-hint {
+  font-size: 11.5px;
+  color: var(--ink-500);
+  line-height: 1.45;
+}
+.demo-tools-roles {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 11px;
+  padding-top: 11px;
+  border-top: 1px dashed var(--border);
+}
+.demo-tools-roles-label {
+  font-size: 11px;
+  color: var(--ink-500);
+  margin-right: 2px;
+}
+
+/* A simulated run has to be distinguishable from the real step at a glance —
+   the tester is driving this in front of a client and must never be unsure
+   which one is on screen. */
+.signin-role-tag.is-simulated {
+  background: var(--warn-surface);
+  color: var(--warn-ink);
+}
+.onboarding-simulated-note {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--warn-ink);
+  background: var(--warn-surface);
+  border: 1px solid var(--warn-border);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  margin-bottom: 16px;
+}
+/* What "Completar después" leaves on the Dashboard. Quieter than the
+   organization notice above it — a personal detail, not a setup task the
+   organization is waiting on.
+
+   Names the pending fields rather than charting them: a progress bar for three
+   items said nothing the count did not, and stretched the full width of the
+   page to say it. */
+.profile-reminder-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  /* The amber lives in the accent, not in a fill: the organization notice above
+     is already an amber block, and stacking two would lose the difference
+     between what the company needs and a personal detail. */
+  border-left: 3px solid var(--warn);
+  border-radius: var(--r-lg);
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+}
+
+/* Exit state. The parent unmounts once the transition has run. */
+.profile-reminder-banner.is-dismissing {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-reminder-banner {
+    transition: none;
+  }
+  .profile-reminder-banner.is-dismissing {
+    transform: none;
+  }
+}
+.profile-reminder-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+  flex-shrink: 0;
+}
+
+/* Takes the slack the bar used to occupy, so the actions stay pinned to the
+   right edge and the copy never floats in dead space. */
+.profile-reminder-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.profile-reminder-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.profile-reminder-detail {
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1.35;
+}
+
+.profile-reminder-banner .btn {
+  flex-shrink: 0;
+}
+
+/* Not .btn-ghost: that one carries a border in this system, which gave
+   dismissing the same visual weight as the action beside it. */
+.profile-reminder-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-md);
+  color: var(--ink-300);
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+.profile-reminder-dismiss:hover {
+  background: var(--cloud);
+  color: var(--ink-700);
+}
+.profile-reminder-dismiss:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+/* Narrow: the detail line goes first — the title plus the button still say
+   what to do. */
+@media (max-width: 560px) {
+  .profile-reminder-detail {
+    display: none;
+  }
+}
+
+/* =========================================================================
    Dashboard: KPI trend, attention queue, team rollup.
    All colours via tokens — the Dublinks theme redefines the whole palette,
    so a hex here would break under the design-system switch.
@@ -6300,12 +6529,6 @@ textarea#lost-modal-reason {
   background: var(--cloud);
   flex-shrink: 0;
 }
-/* Pushes destructive/tertiary actions away from the primary so they can't be
-   mis-clicked for it. */
-.dialog-foot .foot-spacer {
-  margin-right: auto;
-}
-
 /* ---------------- Field pattern ---------------- */
 
 .field-group {

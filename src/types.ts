@@ -96,6 +96,16 @@ export interface UserMember {
   initials: string;
   avatarBg: string;
   avatarUrl?: string;
+  /**
+   * Set when the user closes the "complete your profile" notice, or completes
+   * the profile outright. A permanent choice, not a snooze: once true the notice
+   * never comes back, even if a field is emptied again later.
+   *
+   * On the user rather than in App state so it follows the person across sign
+   * outs. Without a backend it still resets on reload, and cannot cross
+   * devices — that needs an API.
+   */
+  profileBannerDismissed?: boolean;
 }
 
 export type ViewType = 'dashboard' | 'leads' | 'opportunities' | 'users' | 'lead-detail' | 'opp-detail' | 'user-detail' | 'organizations' | 'org-detail' | 'org-user-detail' | 'sa-users' | 'org-management';

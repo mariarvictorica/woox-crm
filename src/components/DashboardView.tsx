@@ -26,9 +26,11 @@ import {
   getContactsWithoutOpenOpp,
   getStaleContacts
 } from '../data/initialData';
-import type { OrgProfileFieldKey } from '../data/initialData';
+import type { OrgProfileFieldKey, UserProfileField } from '../data/initialData';
 import { UserAvatar } from './UserAvatar';
 import { OrgProfileChecklistBanner } from './OrgProfileChecklistBanner';
+import { ProfileReminderBanner } from './ProfileReminderBanner';
+import { PendingZone } from './PendingZone';
 import { DashboardAttentionPanel, AttentionItem } from './DashboardAttentionPanel';
 import { TeamPerformancePanel } from './TeamPerformancePanel';
 
@@ -56,6 +58,11 @@ interface DashboardViewProps {
    *  and their figures scoped to their own opportunities. */
   canSeeTeam?: boolean;
   onCompleteOrgProfile?: (field?: OrgProfileFieldKey) => void;
+  /** Set only for someone who deferred the onboarding step, so the reminder
+   *  reaches the person who postponed it and nobody else. */
+  ownProfileMissing?: UserProfileField[];
+  onCompleteOwnProfile?: () => void;
+  onDismissProfileReminder?: () => void;
 }
 
 /**
@@ -80,7 +87,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   currentUserName,
   isOrgOwner = false,
   canSeeTeam = false,
-  onCompleteOrgProfile
+  onCompleteOrgProfile,
+  ownProfileMissing,
+  onCompleteOwnProfile,
+  onDismissProfileReminder
 }) => {
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>('');
   const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
@@ -427,22 +437,37 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </header>
 
-      {/* 2. Lo primero: qué requiere acción.
+      {/* 2. Lo primero: lo que está pendiente.
 
-          El aviso de perfil de organización queda como bloque propio debajo, y
-          no como una fila más de la cola: su barra de progreso y sus atajos por
-          campo dicen más que un conteo, y son una tarea de configuración, no un
-          seguimiento comercial. Ordenados uno tras otro, la jerarquía es clara
-          sin que compitan por el mismo lugar. */}
-      {canSeeTeam && <DashboardAttentionPanel items={attentionItems} />}
+          Todo lo que reclama una acción del usuario va acá arriba y junto, antes
+          de cualquier lista o número. Cada sección conserva su propia condición
+          de visibilidad; la zona solo decide el lugar.
 
-      {orgMissing.length > 0 && (
-        <OrgProfileChecklistBanner
-          missing={orgMissing}
-          total={ORG_PROFILE_FIELDS.length}
-          onComplete={field => onCompleteOrgProfile?.(field)}
-        />
-      )}
+          Configuración antes de la cola comercial: lo primero que se pide es
+          completar los datos que faltan, y recién después el seguimiento del
+          día. El aviso de organización sigue siendo un bloque propio y no una
+          fila más de la cola, porque su barra de progreso y sus atajos por campo
+          dicen más que un conteo. */}
+      <PendingZone>
+        {orgMissing.length > 0 && (
+          <OrgProfileChecklistBanner
+            missing={orgMissing}
+            total={ORG_PROFILE_FIELDS.length}
+            onComplete={field => onCompleteOrgProfile?.(field)}
+            scopeId={organization?.id}
+          />
+        )}
+
+        {ownProfileMissing && ownProfileMissing.length > 0 && (
+          <ProfileReminderBanner
+            missing={ownProfileMissing}
+            onComplete={() => onCompleteOwnProfile?.()}
+            onDismiss={() => onDismissProfileReminder?.()}
+          />
+        )}
+
+        {canSeeTeam && <DashboardAttentionPanel items={attentionItems} />}
+      </PendingZone>
 
       {/* 3. La organización de un vistazo */}
       <div className="manager-kpi-grid" id="dash-kpis">

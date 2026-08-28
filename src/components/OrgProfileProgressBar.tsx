@@ -5,6 +5,9 @@ interface OrgProfileProgressBarProps {
   total: number;
   /** Set when something needs aria-controls to point here. */
   id?: string;
+  /** What the bar is measuring. The organization profile is no longer the only
+   *  caller, so the accessible name cannot be baked in. */
+  label?: string;
 }
 
 /**
@@ -19,7 +22,8 @@ interface OrgProfileProgressBarProps {
 export const OrgProfileProgressBar: React.FC<OrgProfileProgressBarProps> = ({
   completed,
   total,
-  id
+  id,
+  label = 'Progreso del perfil de la organización'
 }) => {
   const isComplete = total > 0 && completed >= total;
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -32,7 +36,7 @@ export const OrgProfileProgressBar: React.FC<OrgProfileProgressBarProps> = ({
       aria-valuenow={completed}
       aria-valuemin={0}
       aria-valuemax={total}
-      aria-label="Progreso del perfil de la organización"
+      aria-label={label}
     >
       <div
         className={`stage-fill ${isComplete ? 'won' : ''}`}

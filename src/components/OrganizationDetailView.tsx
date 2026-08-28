@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Organization, UserMember } from '../types';
 import { UserAvatar } from './UserAvatar';
 import { InviteUserDrawer } from './InviteUserDrawer';
-import { COUNTRY_CODES, splitPhone } from '../data/initialData';
+import { joinPhone, splitPhone } from '../data/initialData';
 import { Dialog } from './Dialog';
 import { FormField } from './FormField';
+import { TextField } from './TextField';
+import { PhoneField } from './PhoneField';
 import { UsersTable } from './UsersTable';
 
 interface OrganizationDetailViewProps {
@@ -565,24 +567,24 @@ export const OrganizationDetailView: React.FC<OrganizationDetailViewProps> = ({
           </>
         }
       >
-        <FormField label="Nombre de la organización" htmlFor="edit-org-name" required error={errors.name}>
-          <input
-            type="text"
-            id="edit-org-name"
-            data-autofocus
-            value={editName}
-            onChange={e => {
-              setEditName(e.target.value);
-              if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
-            }}
-            onBlur={e =>
-              setErrors(prev => ({
-                ...prev,
-                name: e.target.value.trim() ? '' : 'Escribí el nombre de la organización'
-              }))
-            }
-          />
-        </FormField>
+        <TextField
+          label="Nombre de la organización"
+          id="edit-org-name"
+          value={editName}
+          onChange={v => {
+            setEditName(v);
+            if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+          }}
+          onBlur={() =>
+            setErrors(prev => ({
+              ...prev,
+              name: editName.trim() ? '' : 'Escribí el nombre de la organización'
+            }))
+          }
+          error={errors.name}
+          required
+          autoFocus
+        />
 
         <FormField
           label="Owner"
@@ -677,14 +679,12 @@ export const OrganizationDetailView: React.FC<OrganizationDetailViewProps> = ({
           <div className="field-section-label">Datos fiscales y de contacto</div>
 
           <div className="field-row">
-            <FormField label="Nombre comercial" htmlFor="edit-org-trade-name">
-              <input
-                type="text"
-                id="edit-org-trade-name"
-                value={editTradeName}
-                onChange={e => setEditTradeName(e.target.value)}
-              />
-            </FormField>
+            <TextField
+              label="Nombre comercial"
+              id="edit-org-trade-name"
+              value={editTradeName}
+              onChange={v => setEditTradeName(v)}
+            />
 
             <FormField label="RFC" htmlFor="edit-org-tax-id">
               <input
@@ -696,14 +696,12 @@ export const OrganizationDetailView: React.FC<OrganizationDetailViewProps> = ({
             </FormField>
           </div>
 
-          <FormField label="Dirección" htmlFor="edit-org-address">
-            <input
-              type="text"
-              id="edit-org-address"
-              value={editAddress}
-              onChange={e => setEditAddress(e.target.value)}
-            />
-          </FormField>
+          <TextField
+            label="Dirección"
+            id="edit-org-address"
+            value={editAddress}
+            onChange={v => setEditAddress(v)}
+          />
 
           <FormField label="Correo de la organización" htmlFor="edit-org-email">
             <input
@@ -714,31 +712,14 @@ export const OrganizationDetailView: React.FC<OrganizationDetailViewProps> = ({
             />
           </FormField>
 
-          <FormField label="Teléfono" htmlFor="edit-org-phone">
-            <div className="phone-input-combo">
-              <select
-                id="edit-org-countrycode"
-                aria-label="Código de país"
-                className="phone-country-select"
-                value={editCountryCode}
-                onChange={e => setEditCountryCode(e.target.value)}
-              >
-                {COUNTRY_CODES.map(c => (
-                  <option key={c.code} value={c.code}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="tel"
-                inputMode="tel"
-                id="edit-org-phone"
-                className="phone-number-input"
-                value={editPhone}
-                onChange={e => setEditPhone(e.target.value)}
-              />
-            </div>
-          </FormField>
+          <PhoneField
+            id="edit-org-phone"
+            codeId="edit-org-countrycode"
+            countryCode={editCountryCode}
+            number={editPhone}
+            onCountryCodeChange={v => setEditCountryCode(v)}
+            onNumberChange={v => setEditPhone(v)}
+          />
         </div>
       </Dialog>
 

@@ -4,7 +4,7 @@ import { Dialog } from './Dialog';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FormField } from './FormField';
 import { UserFormFields, UserFormValues } from './UserFormFields';
-import { splitPhone, displayRole } from '../data/initialData';
+import { splitPhone, displayRole, joinPhone } from '../data/initialData';
 
 interface EditUserDrawerProps {
   isOpen: boolean;
@@ -152,14 +152,14 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
       role: selfEdit ? user.role : values.role,
       organization: user.organization,
       position: values.position.trim() || undefined,
-      phone: values.phone.trim() ? `${values.countryCode} ${values.phone.trim()}` : undefined,
+      phone: joinPhone(values.countryCode, values.phone),
       initials,
       avatarUrl: values.avatarUrl.trim() || undefined
     });
 
     onClose();
     if (onShowToast) {
-      onShowToast(selfEdit ? 'Tu perfil se actualizó con éxito' : `Usuario ${fullName} actualizado con éxito`);
+      onShowToast(selfEdit ? 'Perfil actualizado' : `Usuario ${fullName} actualizado con éxito`);
     }
   };
 
@@ -187,7 +187,9 @@ export const EditUserDrawer: React.FC<EditUserDrawerProps> = ({
               className="btn btn-ghost"
               onClick={() => (isDirty ? setShowDiscard(true) : onClose())}
             >
-              Cancelar
+              {/* Editing yourself is something you can postpone; an admin
+                  editing someone else is cancelling a task. */}
+              {selfEdit ? 'Después' : 'Cancelar'}
             </button>
             <button type="submit" className="btn btn-primary" id="btn-save-user-screen">
               Guardar cambios

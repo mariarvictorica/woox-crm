@@ -7,8 +7,20 @@ interface SignInViewProps {
   /** Which of the three sign-ins to render, from the location hash. */
   variantRole: PlatformRole;
   onVariantChange: (role: PlatformRole) => void;
-  /** Resolves the credentials. Returns an error message, or null on success. */
-  onSignIn: (email: string, password: string, role: PlatformRole) => string | null;
+  /**
+   * Resolves the credentials. Returns an error message, or null on success.
+   * `simulateOnboarding` asks for the first-sign-in step to be replayed after
+   * a successful sign-in; App decides whether to honour it.
+   */
+  onSignIn: (
+    email: string,
+    password: string,
+    role: PlatformRole,
+    simulateOnboarding?: boolean
+  ) => string | null;
+  /** Whether to offer the demo-only tooling at all. Off in any build that did
+   *  not ask for it, so production never renders it. */
+  showDemoTools?: boolean;
 }
 
 type Step = 'signin' | 'reset-request' | 'reset-sent';
@@ -26,7 +38,8 @@ type Step = 'signin' | 'reset-request' | 'reset-sent';
 export const SignInView: React.FC<SignInViewProps> = ({
   variantRole,
   onVariantChange,
-  onSignIn
+  onSignIn,
+  showDemoTools = false
 }) => {
   const variant = useMemo(
     () => SIGN_IN_VARIANTS.find(v => v.role === variantRole) || SIGN_IN_VARIANTS[1],
@@ -40,18 +53,27 @@ export const SignInView: React.FC<SignInViewProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  /** Demo tooling: replay the first-sign-in step for whichever account comes
+   *  in, regardless of whether its profile is actually incomplete. */
+  const [simulateOnboarding, setSimulateOnboarding] = useState(false);
 
   // Switching variant is arriving at a different address: start clean rather
   // than carrying one role's half-typed credentials to another.
+  //
+  // While simulating, the role's demo credentials are filled in instead: the
+  // point of that mode is to reach the step in one click, and leaving the
+  // tester to retype them each time they switch role is friction with nothing
+  // to show for it.
   useEffect(() => {
+    const v = SIGN_IN_VARIANTS.find(x => x.role === variantRole);
     setStep('signin');
-    setEmail('');
-    setPassword('');
+    setEmail(simulateOnboarding && v ? v.demoEmail : '');
+    setPassword(simulateOnboarding && v ? v.demoPassword : '');
     setResetEmail('');
     setErrors({});
     setFormError('');
     setIsSubmitting(false);
-  }, [variantRole]);
+  }, [variantRole, simulateOnboarding]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +94,12 @@ export const SignInView: React.FC<SignInViewProps> = ({
     setIsSubmitting(true);
     // Brief pause so the pending state is visible, matching the invite drawer.
     setTimeout(() => {
-      const message = onSignIn(email.trim().toLowerCase(), password, variantRole);
+      const message = onSignIn(
+        email.trim().toLowerCase(),
+        password,
+        variantRole,
+        simulateOnboarding
+      );
       setIsSubmitting(false);
       if (message) {
         setFormError(message);
@@ -312,6 +339,56 @@ export const SignInView: React.FC<SignInViewProps> = ({
           </button>
         ))}
       </div>
+
+      {/* Demo-only, and deliberately outside the card: this is scaffolding for
+          showing the flow to a client, not part of signing in. Rendered only
+          when the build asked for it — see SHOW_DEMO_TOOLS. */}
+      {showDemoTools && step === 'signin' && (
+        <div className="demo-tools" id="demo-tools">
+          <div className="demo-tools-label">Herramientas de prototipo</div>
+
+          <label className="demo-tools-row" htmlFor="chk-simulate-onboarding">
+            <input
+              type="checkbox"
+              className="custom-checkbox"
+              id="chk-simulate-onboarding"
+              checked={simulateOnboarding}
+              onChange={e => {
+                const on = e.target.checked;
+                setSimulateOnboarding(on);
+                // The step belongs to Managers and Reps; the Super Admin has no
+                // organization and never goes through it. Land on a role the
+                // selector below can actually represent.
+                if (on && variantRole === 'superadmin') onVariantChange('manager');
+              }}
+            />
+            <span className="demo-tools-copy">
+              <span className="demo-tools-title">Simular primer ingreso</span>
+              <span className="demo-tools-hint">
+                Muestra el paso de completar perfil aunque la cuenta ya lo tenga completo.
+                No modifica ningún dato de la cuenta.
+              </span>
+            </span>
+          </label>
+
+          {simulateOnboarding && (
+            <div className="demo-tools-roles" id="demo-tools-roles">
+              <span className="demo-tools-roles-label">Entrar como</span>
+              {SIGN_IN_VARIANTS.filter(v => v.role !== 'superadmin').map(v => (
+                <button
+                  key={v.role}
+                  type="button"
+                  id={`btn-simulate-as-${v.role}`}
+                  className={`signin-variant-btn ${v.role === variantRole ? 'active' : ''}`}
+                  onClick={() => onVariantChange(v.role)}
+                >
+                  {v.tag}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

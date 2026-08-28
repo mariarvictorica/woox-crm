@@ -4,6 +4,7 @@ import { UserAvatar } from './UserAvatar';
 import { Dialog } from './Dialog';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FormField } from './FormField';
+import { TextField } from './TextField';
 
 interface NewOpportunityModalProps {
   isOpen: boolean;
@@ -121,20 +122,20 @@ export const NewOpportunityModal: React.FC<NewOpportunityModalProps> = ({
           </>
         }
       >
-        <FormField label="Nombre de la oportunidad" htmlFor="opp-form-name" required error={err('name')}>
-          <input
-            type="text"
-            id="opp-form-name"
-            data-autofocus
-            placeholder="Ej. Cotización acabado exterior"
-            value={name}
-            onChange={e => {
-              setName(e.target.value);
-              if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
-            }}
-            onBlur={e => handleBlur('name', e.target.value)}
-          />
-        </FormField>
+        <TextField
+          label="Nombre de la oportunidad"
+          id="opp-form-name"
+          value={name}
+          onChange={v => {
+            setName(v);
+            if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+          }}
+          onBlur={() => handleBlur('name', name)}
+          error={err('name')}
+          placeholder="Ej. Cotización acabado exterior"
+          required
+          autoFocus
+        />
 
         <FormField label="Contacto asociado" htmlFor="opp-contact-select" required>
           <select

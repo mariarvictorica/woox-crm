@@ -7,7 +7,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Hotel Riviera Maya',
     src: 'b2b',
     srcLabel: 'B2B',
-    phone: '+52 998 123 4521',
+    phone: '+52 9981234521',
     email: 'ana.torres@hotelriviera.mx',
     region: 'Quintana Roo',
     giro: 'Hotelería',
@@ -23,7 +23,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Constructora del Norte',
     src: 'b2b',
     srcLabel: 'B2B',
-    phone: '+52 871 220 9981',
+    phone: '+52 8712209981',
     email: 'roberto@construnorte.mx',
     region: 'Coahuila',
     giro: 'Construcción',
@@ -39,7 +39,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Grupo García Obra Civil',
     src: 'b2b',
     srcLabel: 'B2B',
-    phone: '+52 871 555 0132',
+    phone: '+52 8715550132',
     email: 'garcia.obras@gmail.com',
     region: 'Coahuila',
     giro: 'Construcción',
@@ -55,7 +55,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: '',
     src: 'retail',
     srcLabel: 'Retail',
-    phone: '+52 871 300 4410',
+    phone: '+52 8713004410',
     email: 'marifer.lopez@outlook.com',
     region: 'Coahuila',
     giro: 'Retail',
@@ -71,7 +71,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Landeros Arquitectura & Diseño',
     src: 'b2b',
     srcLabel: 'B2B',
-    phone: '+52 33 1122 3344',
+    phone: '+52 3311223344',
     email: 'sofia@landerosarq.mx',
     region: 'Jalisco',
     giro: 'Arquitectura',
@@ -87,7 +87,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Operadora Turística del Caribe',
     src: 'b2b',
     srcLabel: 'B2B',
-    phone: '+52 998 700 1290',
+    phone: '+52 9987001290',
     email: 'compras@terrazasdelmar.mx',
     region: 'Quintana Roo',
     giro: 'Hotelería',
@@ -103,7 +103,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Pinturas Express',
     src: 'retail',
     srcLabel: 'Retail',
-    phone: '+52 55 4433 2211',
+    phone: '+52 5544332211',
     email: 'jrios@pinturasexpress.com',
     region: 'CDMX',
     giro: 'Retail',
@@ -119,7 +119,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Desarrollos Vallarta S.A.',
     src: 'b2b',
     srcLabel: 'B2B',
-    phone: '+52 322 190 8871',
+    phone: '+52 3221908871',
     email: 'proyectos@desarrollosvallarta.mx',
     region: 'Jalisco',
     giro: 'Construcción',
@@ -135,7 +135,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Residencial Las Palmas',
     src: 'online',
     srcLabel: 'Online',
-    phone: '+52 871 998 2201',
+    phone: '+52 8719982201',
     email: 'rosaelena.mtz@hotmail.com',
     region: 'Coahuila',
     giro: 'Servicios',
@@ -151,7 +151,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Mendoza Estructuras & Acabados',
     src: 'b2b',
     srcLabel: 'B2B',
-    phone: '+52 81 8345 6789',
+    phone: '+52 8183456789',
     email: 'carlos@mendozaestructuras.com',
     region: 'Nuevo León',
     giro: 'Construcción',
@@ -167,7 +167,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Grupo EcoTurismo Riviera',
     src: 'online',
     srcLabel: 'Online',
-    phone: '+52 984 109 3322',
+    phone: '+52 9841093322',
     email: 'admin@boutiquetulum.mx',
     region: 'Quintana Roo',
     giro: 'Hotelería',
@@ -183,7 +183,7 @@ export const INITIAL_CONTACTS: Contact[] = [
     company: 'Nova Space Design',
     src: 'online',
     srcLabel: 'Online',
-    phone: '+52 55 5678 1234',
+    phone: '+52 5556781234',
     email: 'hola@novaspacedesign.mx',
     region: 'CDMX',
     giro: 'Arquitectura',
@@ -486,6 +486,35 @@ export const COUNTRY_CODES = [
   { code: '+598', label: '+598' },
   { code: '+591', label: '+591' }
 ];
+
+/**
+ * Phone fields accept digits and nothing else. Applied on every keystroke by
+ * PhoneField, so a pasted "+52 (871) 123-4567" collapses to its digits instead
+ * of being rejected outright.
+ */
+export const digitsOnly = (value: string): string => (value || '').replace(/\D/g, '');
+
+/**
+ * Uppercases the first character and leaves the rest alone. Applied while
+ * typing by TextField, so "maria" becomes "Maria" without the user going back
+ * to fix it.
+ *
+ * Only the first character on purpose: title-casing every word would fight
+ * names like "de la Cruz" and company names like "y Solventes del Bajío".
+ */
+export const capitalizeFirst = (value: string): string =>
+  value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+
+/**
+ * Builds the stored phone from the two controls that collect it. Every caller
+ * used to concatenate this by hand, which is how the formats drifted.
+ * The space separates the country code from the number; the number itself
+ * carries none.
+ */
+export const joinPhone = (code: string, number: string): string | undefined => {
+  const digits = digitsOnly(number);
+  return digits ? `${code} ${digits}` : undefined;
+};
 
 /** Splits a stored "+52 871 123 4567" into its code and local-number parts. */
 export const splitPhone = (raw: string): { code: string; number: string } => {
@@ -800,15 +829,35 @@ export const PLATFORM_CAPABILITIES: Record<PlatformRole, PlatformCapabilities> =
  * Credentials are shown on the screen on purpose: the point is to demo the
  * flow, including getting it wrong.
  */
+/** The one password every account in the prototype accepts, including the ones
+ *  created live during a demo. Real auth is out of scope here; what has to work
+ *  is the flow. */
+export const DEMO_PASSWORD = 'demo1234';
+
+/**
+ * Whether the prototype's demo-only tooling is offered — today, the control
+ * that replays the first-sign-in step on demand.
+ *
+ * Off unless asked for, so a plain production build never carries it: local
+ * `npm run dev` always has it, and any build needs VITE_SHOW_DEMO_TOOLS=true
+ * set explicitly. Vercel counts as a build, so the demo deployment has to set
+ * the variable or the control will not be there.
+ *
+ * Not a feature flag for a feature — this is scaffolding, and the aim is for
+ * it to be removable in one commit.
+ */
+export const SHOW_DEMO_TOOLS =
+  import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_TOOLS === 'true';
+
 export const SIGN_IN_VARIANTS: {
   role: PlatformRole;
   tag: string;
   demoEmail: string;
   demoPassword: string;
 }[] = [
-  { role: 'superadmin', tag: 'App Admin', demoEmail: 'enrique@woox.mx', demoPassword: 'demo1234' },
-  { role: 'manager', tag: 'Manager', demoEmail: 'pedro@garin.mx', demoPassword: 'demo1234' },
-  { role: 'rep', tag: 'Representante de Ventas', demoEmail: 'maria@garin.mx', demoPassword: 'demo1234' }
+  { role: 'superadmin', tag: 'App Admin', demoEmail: 'enrique@woox.mx', demoPassword: DEMO_PASSWORD },
+  { role: 'manager', tag: 'Manager', demoEmail: 'pedro@garin.mx', demoPassword: DEMO_PASSWORD },
+  { role: 'rep', tag: 'Representante de Ventas', demoEmail: 'maria@garin.mx', demoPassword: DEMO_PASSWORD }
 ];
 
 export type OrgProfileFieldKey = 'logoUrl' | 'tradeName' | 'taxId' | 'address' | 'email' | 'phone';
@@ -837,6 +886,43 @@ export function getOrgMissingFields(org?: Organization): OrgProfileField[] {
   return ORG_PROFILE_FIELDS.filter(f => !(org[f.key] || '').toString().trim());
 }
 
+export type UserProfileFieldKey = 'position' | 'phone' | 'avatarUrl';
+
+export interface UserProfileField {
+  key: UserProfileFieldKey;
+  label: string;
+}
+
+/** What a new user still has to fill in after whoever created them left the
+ *  optional half of the invite form empty. Mirrors ORG_PROFILE_FIELDS: name,
+ *  surname and email are absent because the invite form requires them, so
+ *  they are never pending. */
+export const USER_PROFILE_FIELDS: UserProfileField[] = [
+  { key: 'position', label: 'Puesto' },
+  { key: 'phone', label: 'Teléfono' },
+  { key: 'avatarUrl', label: 'Foto de perfil' }
+];
+
+/** The single answer to "is this profile complete", so the onboarding step and
+ *  anything that nudges towards it can never disagree. */
+export function getUserMissingFields(user?: UserMember): UserProfileField[] {
+  if (!user) return [];
+  return USER_PROFILE_FIELDS.filter(f => !(user[f.key] || '').toString().trim());
+}
+
+/**
+ * Translates the role stored on a user into the role a session runs under.
+ *
+ * The two vocabularies are separate on purpose — one is the org chart, the
+ * other is what the app lets you do — but nothing bridged them, so a user
+ * created during the demo had no way to reach a sign-in screen.
+ */
+export function platformRoleFor(role: string): PlatformRole {
+  if (role === 'Super Admin (SA)') return 'superadmin';
+  if (role === 'Manager') return 'manager';
+  return 'rep';
+}
+
 
 export const INITIAL_USERS: UserMember[] = [
   // Platform-level account, deliberately outside every tenant: the Super Admin
@@ -849,10 +935,11 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Enrique',
     lastName: 'Macias',
     position: 'Super Admin · WooX Platform',
-    phone: '+52 871 440 2199',
+    phone: '+52 8714402199',
     email: 'enrique@woox.mx',
     role: 'Super Admin (SA)',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'hoy, 09:12',
     initials: 'EM',
     avatarBg: 'var(--accent)',
@@ -865,11 +952,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Pedro',
     lastName: 'Barcellona',
     position: 'Gerente Comercial',
-    phone: '+52 871 512 7730',
+    phone: '+52 8715127730',
     email: 'pedro@garin.mx',
     role: 'Manager',
     organization: 'KUM S.A',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'hoy, 09:05',
     initials: 'PB',
     avatarBg: 'var(--primary)',
@@ -881,11 +969,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Diego',
     lastName: 'Valenzuela',
     position: 'Asesor Comercial B2B',
-    phone: '+52 871 123 4567',
+    phone: '+52 8711234567',
     email: 'diego@garin.mx',
     role: 'Rep',
     organization: 'KUM S.A',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'hoy, 10:44',
     initials: 'D',
     avatarBg: 'var(--info)',
@@ -897,11 +986,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Maria',
     lastName: 'Torres',
     position: 'Ejecutiva de Cuentas Clave',
-    phone: '+52 871 987 6543',
+    phone: '+52 8719876543',
     email: 'maria@garin.mx',
     role: 'Rep',
     organization: 'KUM S.A',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'hoy, 08:57',
     initials: 'M',
     avatarBg: 'var(--orange)',
@@ -913,11 +1003,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Adamaris',
     lastName: 'Gómez',
     position: 'Asesora de Ventas Retail & Obras',
-    phone: '+52 871 554 3322',
+    phone: '+52 8715543322',
     email: 'adamaris@garin.mx',
     role: 'Rep',
     organization: 'KUM S.A',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'ayer, 18:30',
     initials: 'A',
     avatarBg: 'var(--storm-deep)',
@@ -934,11 +1025,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Rocío',
     lastName: 'Alcántara',
     position: 'Directora General',
-    phone: '+52 81 8140 2277',
+    phone: '+52 8181402277',
     email: 'roc.alcantara@aceval.mx',
     role: 'Manager',
     organization: 'Distribuidora Aceval S.A. de C.V.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'hoy, 08:15',
     initials: 'RA',
     avatarBg: 'var(--primary)'
@@ -949,11 +1041,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Gustavo',
     lastName: 'Berrocal',
     position: 'Gerente General',
-    phone: '+52 614 415 8890',
+    phone: '+52 6144158890',
     email: 'g.berrocal@elancla.mx',
     role: 'Manager',
     organization: 'Grupo Ferretero del Norte S.A.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'ayer, 17:40',
     initials: 'GB',
     avatarBg: 'var(--info)'
@@ -964,11 +1057,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Nayeli',
     lastName: 'Chan',
     position: 'Socia fundadora',
-    phone: '+52 999 287 1130',
+    phone: '+52 9992871130',
     email: 'nayeli.chan@yaguara.mx',
     role: 'Manager',
     organization: 'Comercial Yaguará S.A. de C.V.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'hoy, 10:02',
     initials: 'NC',
     avatarBg: 'var(--orange)'
@@ -993,11 +1087,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Lucía',
     lastName: 'Ferrari',
     position: 'Gerente de Tiendas',
-    phone: '+52 33 3615 9042',
+    phone: '+52 3336159042',
     email: 'lucia.ferrari@trebolhogar.mx',
     role: 'Manager',
     organization: 'Almacenes Trébol S.A. de C.V.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: '2d ago',
     initials: 'LF',
     avatarBg: 'var(--accent)'
@@ -1008,11 +1103,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Héctor',
     lastName: 'Palomino',
     position: 'Director de Operaciones',
-    phone: '+52 222 249 3318',
+    phone: '+52 2222493318',
     email: 'h.palomino@miralta.mx',
     role: 'Manager',
     organization: 'Insumos Constructivos Miralta S.A.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'hoy, 09:31',
     initials: 'HP',
     avatarBg: 'var(--storm-deep)'
@@ -1023,11 +1119,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Sofía',
     lastName: 'Arriaga',
     position: 'Gerente Comercial',
-    phone: '+52 477 718 6624',
+    phone: '+52 4777186624',
     email: 'sofia.arriaga@pintubajio.mx',
     role: 'Manager',
     organization: 'Pinturas y Solventes del Bajío S.A.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: '3d ago',
     initials: 'SA',
     avatarBg: 'var(--primary)'
@@ -1038,11 +1135,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Bruno',
     lastName: 'Sandoval',
     position: 'Director General',
-    phone: '+52 55 5280 7715',
+    phone: '+52 5552807715',
     email: 'b.sandoval@santamarina.mx',
     role: 'Manager',
     organization: 'Corporativo Santamarina S.A. de C.V.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'hoy, 07:58',
     initials: 'BS',
     avatarBg: 'var(--info)'
@@ -1067,11 +1165,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Andrés',
     lastName: 'Loera',
     position: 'Socio Director',
-    phone: '+52 662 213 4408',
+    phone: '+52 6622134408',
     email: 'a.loera@cimarron.mx',
     role: 'Manager',
     organization: 'Grupo Cimarrón S.A. de C.V.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: '5d ago',
     initials: 'AL',
     avatarBg: 'var(--orange)'
@@ -1082,11 +1181,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Marisol',
     lastName: 'Tejada',
     position: 'Asesora Comercial',
-    phone: '+52 81 8140 2281',
+    phone: '+52 8181402281',
     email: 'm.tejada@aceval.mx',
     role: 'Rep',
     organization: 'Distribuidora Aceval S.A. de C.V.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'hoy, 09:44',
     initials: 'MT',
     avatarBg: 'var(--orange)'
@@ -1097,11 +1197,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Fermín',
     lastName: 'Oyarzún',
     position: 'Asesor de Obra',
-    phone: '+52 81 8140 2290',
+    phone: '+52 8181402290',
     email: 'f.oyarzun@aceval.mx',
     role: 'Rep',
     organization: 'Distribuidora Aceval S.A. de C.V.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'ayer, 16:12',
     initials: 'FO',
     avatarBg: 'var(--info)'
@@ -1112,11 +1213,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Camila',
     lastName: 'Restrepo',
     position: 'Ejecutiva de Cuentas',
-    phone: '+52 55 5280 7720',
+    phone: '+52 5552807720',
     email: 'c.restrepo@santamarina.mx',
     role: 'Rep',
     organization: 'Corporativo Santamarina S.A. de C.V.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: 'hoy, 11:05',
     initials: 'CR',
     avatarBg: 'var(--accent)'
@@ -1127,11 +1229,12 @@ export const INITIAL_USERS: UserMember[] = [
     firstName: 'Tomás',
     lastName: 'Ibáñez',
     position: 'Gerente Regional',
-    phone: '+52 55 5280 7733',
+    phone: '+52 5552807733',
     email: 't.ibanez@santamarina.mx',
     role: 'Manager',
     organization: 'Corporativo Santamarina S.A. de C.V.',
     status: 'Activo',
+    profileBannerDismissed: true,
     lastAccess: '2d ago',
     initials: 'TI',
     avatarBg: 'var(--primary)'
@@ -1146,6 +1249,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Rep',
     organization: 'Almacenes Trébol S.A. de C.V.',
     status: 'Inactivo',
+    profileBannerDismissed: true,
     lastAccess: 'hace 3 semanas',
     initials: 'RE',
     avatarBg: 'var(--graphite)'
@@ -1174,7 +1278,7 @@ export const INITIAL_ORGANIZATIONS: Organization[] = [
     taxId: 'DAC120415H21',
     address: 'Monterrey, Nuevo León',
     email: 'contacto@aceval.mx',
-    phone: '+52 81 8140 2277',
+    phone: '+52 8181402277',
     createdAt: '2026-01-19'
   },
   {
@@ -1184,7 +1288,7 @@ export const INITIAL_ORGANIZATIONS: Organization[] = [
     ownerId: 21,
     address: 'Chihuahua, Chihuahua',
     email: 'ventas@elancla.mx',
-    phone: '+52 614 415 8890',
+    phone: '+52 6144158890',
     createdAt: '2026-02-03'
   },
   {
@@ -1195,7 +1299,7 @@ export const INITIAL_ORGANIZATIONS: Organization[] = [
     taxId: 'CYA180922J44',
     address: 'Mérida, Yucatán',
     email: 'hola@yaguara.mx',
-    phone: '+52 999 287 1130',
+    phone: '+52 9992871130',
     createdAt: '2026-02-27'
   },
   {
@@ -1222,7 +1326,7 @@ export const INITIAL_ORGANIZATIONS: Organization[] = [
     taxId: 'ICM110228K73',
     address: 'Puebla, Puebla',
     email: 'contacto@miralta.mx',
-    phone: '+52 222 249 3318',
+    phone: '+52 2222493318',
     createdAt: '2026-04-02'
   },
   {
@@ -1232,7 +1336,7 @@ export const INITIAL_ORGANIZATIONS: Organization[] = [
     ownerId: 26,
     taxId: 'PSB990310B15',
     address: 'León, Guanajuato',
-    phone: '+52 477 718 6624',
+    phone: '+52 4777186624',
     createdAt: '2026-04-25'
   },
   {
@@ -1243,7 +1347,7 @@ export const INITIAL_ORGANIZATIONS: Organization[] = [
     taxId: 'CSA021105R60',
     address: 'Ciudad de México',
     email: 'recepcion@santamarina.mx',
-    phone: '+52 55 5280 7715',
+    phone: '+52 5552807715',
     createdAt: '2026-05-08'
   },
   {

@@ -5,7 +5,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { FormField } from './FormField';
 import { SearchableSelect } from './SearchableSelect';
 import { UserFormFields, UserFormValues } from './UserFormFields';
-import { EMAIL_RE } from '../data/initialData';
+import { EMAIL_RE, joinPhone } from '../data/initialData';
 
 interface InviteUserDrawerProps {
   isOpen: boolean;
@@ -169,7 +169,7 @@ export const InviteUserDrawer: React.FC<InviteUserDrawerProps> = ({
       role: values.role,
       organization: requireOrganizationSelect ? selectedOrg : organizationName,
       position: values.position.trim() || undefined,
-      phone: values.phone.trim() ? `${values.countryCode} ${values.phone.trim()}` : undefined,
+      phone: joinPhone(values.countryCode, values.phone),
       status: 'Invitado',
       lastAccess: 'Pendiente de activación',
       initials,

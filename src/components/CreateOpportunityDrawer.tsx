@@ -5,6 +5,7 @@ import { UserAvatar } from './UserAvatar';
 import { Dialog } from './Dialog';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FormField } from './FormField';
+import { TextField } from './TextField';
 import { getOriginBadgeClass, getOriginDisplayName } from './LeadsView';
 
 // Was a literal list naming the old cast, with the Manager hardcoded. Reads
@@ -192,20 +193,20 @@ export const CreateOpportunityDrawer: React.FC<CreateOpportunityDrawerProps> = (
           </div>
         </FormField>
 
-        <FormField label="Nombre de la oportunidad" htmlFor="drawer-opp-name" required error={err('name')}>
-          <input
-            type="text"
-            id="drawer-opp-name"
-            data-autofocus
-            placeholder="Ej. Suministro de acabados terraza"
-            value={name}
-            onChange={e => {
-              setName(e.target.value);
-              if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
-            }}
-            onBlur={e => handleBlur('name', e.target.value)}
-          />
-        </FormField>
+        <TextField
+          label="Nombre de la oportunidad"
+          id="drawer-opp-name"
+          value={name}
+          onChange={v => {
+            setName(v);
+            if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+          }}
+          onBlur={() => handleBlur('name', name)}
+          error={err('name')}
+          placeholder="Ej. Suministro de acabados terraza"
+          required
+          autoFocus
+        />
 
         <FormField label="Rep asignado" htmlFor="drawer-opp-rep" required>
           <div className="rep-select" ref={repSelectRef}>
@@ -267,15 +268,14 @@ export const CreateOpportunityDrawer: React.FC<CreateOpportunityDrawerProps> = (
             />
           </FormField>
 
-          <FormField label="Descripción o requerimientos" htmlFor="drawer-opp-desc">
-            <textarea
-              id="drawer-opp-desc"
-              rows={3}
-              placeholder="Volumen, especificaciones técnicas, fechas tentativas de entrega…"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-            />
-          </FormField>
+          <TextField
+            label="Descripción o requerimientos"
+            id="drawer-opp-desc"
+            value={description}
+            onChange={v => setDescription(v)}
+            placeholder="Volumen, especificaciones técnicas, fechas tentativas de entrega…"
+            rows={3}
+          />
         </div>
       </Dialog>
 

@@ -6,6 +6,7 @@ import { EditOpportunityModal } from './EditOpportunityModal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Dialog } from './Dialog';
 import { FormField } from './FormField';
+import { TextField } from './TextField';
 import { NotesAndFiles } from './NotesAndFiles';
 
 function parseToDateInput(val?: string): string {
@@ -938,25 +939,21 @@ export const OpportunityDetailView: React.FC<OpportunityDetailViewProps> = ({
           </>
         }
       >
-        <FormField
+        <TextField
           label="Motivo de pérdida"
-          htmlFor="lost-modal-reason"
-          required
-          hint="Sirve para entender qué mejorar en próximas negociaciones."
+          id="lost-modal-reason"
+          value={lostReason}
+          onChange={v => {
+            setLostReason(v);
+            if (lostReasonError) setLostReasonError('');
+          }}
           error={lostReasonError}
-        >
-          <textarea
-            id="lost-modal-reason"
-            rows={4}
-            data-autofocus
-            placeholder="Ej. Eligió a la competencia por precio."
-            value={lostReason}
-            onChange={e => {
-              setLostReason(e.target.value);
-              if (lostReasonError) setLostReasonError('');
-            }}
-          />
-        </FormField>
+          hint="Sirve para entender qué mejorar en próximas negociaciones."
+          placeholder="Ej. Eligió a la competencia por precio."
+          rows={4}
+          required
+          autoFocus
+        />
       </Dialog>
 
       {/* Edit Opportunity Modal */}

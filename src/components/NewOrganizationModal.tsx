@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Dialog } from './Dialog';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FormField } from './FormField';
-import { COUNTRY_CODES } from '../data/initialData';
+import { TextField } from './TextField';
+import { PhoneField } from './PhoneField';
+import { EMAIL_RE, joinPhone } from '../data/initialData';
+import { UserMember } from '../types';
 
 // The Owner isn't a plain field on Organization — it's a reference to a real
 // UserMember. The form still just collects a name + email; App.tsx is
@@ -23,14 +26,19 @@ interface NewOrganizationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateOrganization: (input: NewOrganizationInput) => void;
+  /**
+   * Everyone already on the platform, to refuse an Owner email that is taken.
+   * Sign-in resolves an account by email, so two records sharing one would make
+   * one of the two people unreachable.
+   */
+  existingUsers?: UserMember[];
 }
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
   isOpen,
   onClose,
-  onCreateOrganization
+  onCreateOrganization,
+  existingUsers = []
 }) => {
   const [name, setName] = useState('');
   const [ownerFirstName, setOwnerFirstName] = useState('');
@@ -89,9 +97,12 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
         return v ? '' : 'Escribí el nombre del Owner';
       case 'ownerLastName':
         return v ? '' : 'Escribí el apellido del Owner';
-      case 'ownerEmail':
+      case 'ownerEmail': {
         if (!v) return 'Escribí el correo del Owner';
-        return EMAIL_RE.test(v) ? '' : 'Revisá el formato del correo (ej. owner@empresa.com)';
+        if (!EMAIL_RE.test(v)) return 'Revisá el formato del correo (ej. owner@empresa.com)';
+        const taken = existingUsers.some(u => u.email.trim().toLowerCase() === v.trim().toLowerCase());
+        return taken ? 'Ya existe un usuario con este correo' : '';
+      }
       case 'email':
         // Optional: only complain if they typed something malformed.
         if (!v) return '';
@@ -144,7 +155,7 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
       taxId: taxId.trim() || undefined,
       address: address.trim() || undefined,
       email: email.trim() || undefined,
-      phone: phone.trim() ? `${countryCode} ${phone.trim()}` : undefined
+      phone: joinPhone(countryCode, phone)
     });
 
     onClose();
@@ -181,52 +192,52 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
         }
       >
         {/* Most important first: what the org is, and who runs it. */}
-        <FormField label="Nombre de la organización" htmlFor="org-form-name" required error={err('name')}>
-          <input
-            type="text"
-            id="org-form-name"
-            data-autofocus
-            placeholder="Ej. Pinturas del Bajío S.A. de C.V."
-            value={name}
-            onChange={e => {
-              setName(e.target.value);
-              clearError('name');
-            }}
-            onBlur={e => handleBlur('name', e.target.value)}
-          />
-        </FormField>
+        <TextField
+          label="Nombre de la organización"
+          id="org-form-name"
+          value={name}
+          onChange={v => {
+            setName(v);
+            clearError('name');
+          }}
+          onBlur={() => handleBlur('name', name)}
+          error={err('name')}
+          placeholder="Ej. Pinturas del Bajío S.A. de C.V."
+          required
+          autoFocus
+        />
 
         <div className="field-section">
           <div className="field-section-label">Owner de la organización</div>
 
           <div className="field-row">
-            <FormField label="Nombre" htmlFor="org-form-ownerFirstName" required error={err('ownerFirstName')}>
-              <input
-                type="text"
-                id="org-form-ownerFirstName"
-                placeholder="Ej. María"
-                value={ownerFirstName}
-                onChange={e => {
-                  setOwnerFirstName(e.target.value);
-                  clearError('ownerFirstName');
-                }}
-                onBlur={e => handleBlur('ownerFirstName', e.target.value)}
-              />
-            </FormField>
+            <TextField
+              label="Nombre"
+              id="org-form-ownerFirstName"
+              value={ownerFirstName}
+              onChange={v => {
+                setOwnerFirstName(v);
+                clearError('ownerFirstName');
+              }}
+              onBlur={() => handleBlur('ownerFirstName', ownerFirstName)}
+              error={err('ownerFirstName')}
+              placeholder="Ej. María"
+              required
+            />
 
-            <FormField label="Apellido" htmlFor="org-form-ownerLastName" required error={err('ownerLastName')}>
-              <input
-                type="text"
-                id="org-form-ownerLastName"
-                placeholder="Ej. López García"
-                value={ownerLastName}
-                onChange={e => {
-                  setOwnerLastName(e.target.value);
-                  clearError('ownerLastName');
-                }}
-                onBlur={e => handleBlur('ownerLastName', e.target.value)}
-              />
-            </FormField>
+            <TextField
+              label="Apellido"
+              id="org-form-ownerLastName"
+              value={ownerLastName}
+              onChange={v => {
+                setOwnerLastName(v);
+                clearError('ownerLastName');
+              }}
+              onBlur={() => handleBlur('ownerLastName', ownerLastName)}
+              error={err('ownerLastName')}
+              placeholder="Ej. López García"
+              required
+            />
           </div>
 
           <FormField
@@ -270,15 +281,13 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
               <div className="field-section-label">Datos fiscales y de contacto</div>
 
               <div className="field-row">
-                <FormField label="Nombre comercial" htmlFor="org-form-trade-name">
-                  <input
-                    type="text"
-                    id="org-form-trade-name"
-                    placeholder="Ej. PintuBajío"
-                    value={tradeName}
-                    onChange={e => setTradeName(e.target.value)}
-                  />
-                </FormField>
+                <TextField
+                  label="Nombre comercial"
+                  id="org-form-trade-name"
+                  value={tradeName}
+                  onChange={v => setTradeName(v)}
+                  placeholder="Ej. PintuBajío"
+                />
 
                 <FormField label="RFC" htmlFor="org-form-tax-id">
                   <input
@@ -291,15 +300,13 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
                 </FormField>
               </div>
 
-              <FormField label="Dirección" htmlFor="org-form-address">
-                <input
-                  type="text"
-                  id="org-form-address"
-                  placeholder="Ej. León, Guanajuato"
-                  value={address}
-                  onChange={e => setAddress(e.target.value)}
-                />
-              </FormField>
+              <TextField
+                label="Dirección"
+                id="org-form-address"
+                value={address}
+                onChange={v => setAddress(v)}
+                placeholder="Ej. León, Guanajuato"
+              />
 
               <FormField label="Correo de la organización" htmlFor="org-form-email" error={err('email')}>
                 <input
@@ -315,32 +322,14 @@ export const NewOrganizationModal: React.FC<NewOrganizationModalProps> = ({
                 />
               </FormField>
 
-              <FormField label="Teléfono" htmlFor="org-form-phone">
-                <div className="phone-input-combo">
-                  <select
-                    id="org-form-countrycode"
-                    aria-label="Código de país"
-                    className="phone-country-select"
-                    value={countryCode}
-                    onChange={e => setCountryCode(e.target.value)}
-                  >
-                    {COUNTRY_CODES.map(c => (
-                      <option key={c.code} value={c.code}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="tel"
-                    inputMode="tel"
-                    id="org-form-phone"
-                    className="phone-number-input"
-                    placeholder="Ej. 477 123 4567"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                  />
-                </div>
-              </FormField>
+              <PhoneField
+                id="org-form-phone"
+                codeId="org-form-countrycode"
+                countryCode={countryCode}
+                number={phone}
+                onCountryCodeChange={v => setCountryCode(v)}
+                onNumberChange={v => setPhone(v)}
+              />
             </>
           )}
         </div>

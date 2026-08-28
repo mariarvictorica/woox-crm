@@ -14,6 +14,13 @@ interface UserAvatarProps {
   title?: string;
   border?: boolean;
   type?: 'rep' | 'ai' | 'sys';
+  /**
+   * Skips the stored-photo lookup by name, so the avatar shows exactly what it
+   * was handed. Display sites want the lookup — it is how a name alone renders
+   * the right face. A form preview does not: it has to mirror the field, or
+   * clearing a photo would still show the stored one.
+   */
+  ignoreStoredPhoto?: boolean;
 }
 
 const SIZE_MAP: Record<AvatarSize, { width: number; height: number; fontSize: number }> = {
@@ -37,7 +44,8 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   className = '',
   title,
   border = true,
-  type = 'rep'
+  type = 'rep',
+  ignoreStoredPhoto = false
 }) => {
   const [imageError, setImageError] = useState(false);
 
@@ -127,7 +135,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
     );
   }
 
-  const profile = getEmployeeProfile(name);
+  const profile = ignoreStoredPhoto ? undefined : getEmployeeProfile(name);
   const avatarUrl = customAvatarUrl || profile?.avatarUrl;
   const initials =
     customInitials ||
