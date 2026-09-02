@@ -1,20 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Cell
-} from 'recharts';
 import { Opportunity, ActivityEvent, Contact, ViewType, Organization, LeadFilterState } from '../types';
 import {
   EMPLOYEE_PROFILES,
   formatMoney,
   OPEN_STAGES,
   ORG_PROFILE_FIELDS,
+  USER_PROFILE_FIELDS,
+  listFieldLabels,
+  monthRange,
   getOrgMissingFields,
   parseOpportunityCloseDate,
   MONTH_NAMES_ES,
@@ -28,11 +21,12 @@ import {
 } from '../data/initialData';
 import type { OrgProfileFieldKey, UserProfileField } from '../data/initialData';
 import { UserAvatar } from './UserAvatar';
-import { OrgProfileChecklistBanner } from './OrgProfileChecklistBanner';
-import { ProfileReminderBanner } from './ProfileReminderBanner';
+import { AccountSetupSection, SetupRow } from './AccountSetupSection';
 import { PendingZone } from './PendingZone';
 import { DashboardAttentionPanel, AttentionItem } from './DashboardAttentionPanel';
 import { TeamPerformancePanel } from './TeamPerformancePanel';
+import { PipelineStageCards } from './PipelineStageCards';
+import { WonByMonthChart } from './WonByMonthChart';
 
 /** Contacts untouched for this many days count as needing follow-up. */
 const STALE_CONTACT_DAYS = 7;
@@ -58,11 +52,14 @@ interface DashboardViewProps {
    *  and their figures scoped to their own opportunities. */
   canSeeTeam?: boolean;
   onCompleteOrgProfile?: (field?: OrgProfileFieldKey) => void;
-  /** Set only for someone who deferred the onboarding step, so the reminder
-   *  reaches the person who postponed it and nobody else. */
+  /** Which of the user's own optional fields are still empty. */
   ownProfileMissing?: UserProfileField[];
+  /** True once "Más tarde" was pressed. Silences the whole section — both rows,
+   *  not one — which is why it is a prop and not derived per row. */
+  accountSetupDismissed?: boolean;
   onCompleteOwnProfile?: () => void;
-  onDismissProfileReminder?: () => void;
+  /** "Más tarde": puts the whole setup section away permanently. */
+  onDismissAccountSetup?: () => void;
 }
 
 /**
@@ -89,16 +86,55 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   canSeeTeam = false,
   onCompleteOrgProfile,
   ownProfileMissing,
+  accountSetupDismissed = false,
   onCompleteOwnProfile,
-  onDismissProfileReminder
+  onDismissAccountSetup
 }) => {
-  const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>('');
-  const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
 
   const orgMissing = useMemo(
     () => (isOrgOwner ? getOrgMissingFields(organization) : []),
     [organization, isOrgOwner]
   );
+
+  /**
+   * One row per pending setup task that applies to this user. Each is judged on
+   * its own from the live data — the organization row simply never gets built
+   * for someone who does not own one, whatever the state of that data.
+   *
+   * Memoized because the section uses this array's identity to animate a row
+   * out when it completes.
+   */
+  const setupRows = useMemo<SetupRow[]>(() => {
+    if (accountSetupDismissed) return [];
+
+    const rows: SetupRow[] = [];
+
+    if (ownProfileMissing && ownProfileMissing.length > 0) {
+      rows.push({
+        key: 'profile',
+        label: 'Tu perfil',
+        hint: `Falta tu ${listFieldLabels(ownProfileMissing)}.`,
+        completed: USER_PROFILE_FIELDS.length - ownProfileMissing.length,
+        total: USER_PROFILE_FIELDS.length,
+        onComplete: () => onCompleteOwnProfile?.()
+      });
+    }
+
+    if (orgMissing.length > 0) {
+      rows.push({
+        key: 'organization',
+        label: 'Perfil de la organización',
+        hint: `Falta ${listFieldLabels(orgMissing)}.`,
+        completed: ORG_PROFILE_FIELDS.length - orgMissing.length,
+        total: ORG_PROFILE_FIELDS.length,
+        // Straight to the first pending field, the way the old per-field
+        // shortcuts did.
+        onComplete: () => onCompleteOrgProfile?.(orgMissing[0]?.key)
+      });
+    }
+
+    return rows;
+  }, [accountSetupDismissed, ownProfileMissing, orgMissing, onCompleteOwnProfile, onCompleteOrgProfile]);
 
   // A rep sees their own book; a manager sees the organization's.
   const scopedOpps = useMemo(
@@ -158,8 +194,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       monthGroups[deal.monthKey].deals.push(deal);
     });
 
-    // Sort months chronologically
-    const sortedMonths = Object.values(monthGroups).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+    // The whole timeline, from the first sale to the last. Not a fixed lookback:
+    // that opened the chart on empty columns before reaching any activity. The
+    // chart component decides which slice of this is on screen.
+    //
+    // A month with no wins inside the range draws as a gap rather than
+    // disappearing — collapsing it would put two non-adjacent months side by
+    // side as if they followed each other.
+    const realKeys = Object.keys(monthGroups).filter(k => k !== '9999-99').sort();
+    const firstKey = realKeys[0];
+    const anchorKey = realKeys[realKeys.length - 1];
+
+    const sortedMonths = anchorKey
+      ? monthRange(firstKey, anchorKey).map(m => {
+          const group = monthGroups[m.monthKey];
+          return (
+            group || {
+              monthKey: m.monthKey,
+              monthName: m.monthName,
+              monthShort: m.monthShort,
+              totalAmount: 0,
+              count: 0,
+              deals: [] as typeof enrichedDeals
+            }
+          );
+        })
+      : Object.values(monthGroups).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
 
     // Sort deals inside each month descending by date / id
     sortedMonths.forEach(m => {
@@ -177,67 +237,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     };
   }, [opportunities, contacts]);
 
-  // Available months options for dropdown (full current year 2026 + any extra months in data)
-  const availableMonthOptions = useMemo(() => {
-    const default2026Months = [
-      { key: '2026-01', name: 'Enero 2026' },
-      { key: '2026-02', name: 'Febrero 2026' },
-      { key: '2026-03', name: 'Marzo 2026' },
-      { key: '2026-04', name: 'Abril 2026' },
-      { key: '2026-05', name: 'Mayo 2026' },
-      { key: '2026-06', name: 'Junio 2026' },
-      { key: '2026-07', name: 'Julio 2026' },
-      { key: '2026-08', name: 'Agosto 2026' },
-      { key: '2026-09', name: 'Septiembre 2026' },
-      { key: '2026-10', name: 'Octubre 2026' },
-      { key: '2026-11', name: 'Noviembre 2026' },
-      { key: '2026-12', name: 'Diciembre 2026' },
-    ];
-
-    const map = new Map<string, string>();
-    default2026Months.forEach(m => map.set(m.key, m.name));
-    wonData.sortedMonths.forEach(m => {
-      if (!map.has(m.monthKey)) {
-        map.set(m.monthKey, m.monthName);
-      }
-    });
-
-    return Array.from(map.entries())
-      .map(([key, name]) => {
-        const stats = wonData.sortedMonths.find(sm => sm.monthKey === key);
-        return {
-          key,
-          name,
-          count: stats ? stats.count : 0,
-          totalAmount: stats ? stats.totalAmount : 0
-        };
-      })
-      .sort((a, b) => a.key.localeCompare(b.key));
-  }, [wonData.sortedMonths]);
-
-  // Current active month (defaults to August 2026 or latest month with data)
-  const currentMonthKey = useMemo(() => {
-    if (selectedMonthFilter) {
-      return selectedMonthFilter;
-    }
-    const hasAugust = wonData.sortedMonths.some(m => m.monthKey === '2026-08');
-    if (hasAugust) return '2026-08';
-    if (wonData.sortedMonths.length > 0) {
-      return wonData.sortedMonths[wonData.sortedMonths.length - 1].monthKey;
-    }
-    return '2026-08';
-  }, [selectedMonthFilter, wonData.sortedMonths]);
-
-  const currentMonthOption = availableMonthOptions.find(m => m.key === currentMonthKey);
-
-  // Filtered deals to display in the list below the chart
-  const displayedDeals = useMemo(() => {
-    if (!currentMonthKey) {
-      return wonData.allDeals;
-    }
-    return wonData.allDeals.filter(d => d.monthKey === currentMonthKey);
-  }, [wonData, currentMonthKey]);
-
   // 1. Metric Computations
   // ---- Derived metrics. Every one of these comes from the data; where a
   // comparison isn't possible the KPI says so rather than showing a dash.
@@ -246,7 +245,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const openValue = useMemo(() => openOpps.reduce((s, o) => s + (o.value || 0), 0), [openOpps]);
 
   const stageBreakdown = useMemo(() => getStageBreakdown(scopedOpps), [scopedOpps]);
-  const maxStageCount = Math.max(...stageBreakdown.map(s => s.count), 1);
   const activeStages = stageBreakdown.filter(s => OPEN_STAGES.includes(s.key));
   const closedStages = stageBreakdown.filter(s => !OPEN_STAGES.includes(s.key));
 
@@ -449,22 +447,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           fila más de la cola, porque su barra de progreso y sus atajos por campo
           dicen más que un conteo. */}
       <PendingZone>
-        {orgMissing.length > 0 && (
-          <OrgProfileChecklistBanner
-            missing={orgMissing}
-            total={ORG_PROFILE_FIELDS.length}
-            onComplete={field => onCompleteOrgProfile?.(field)}
-            scopeId={organization?.id}
-          />
-        )}
-
-        {ownProfileMissing && ownProfileMissing.length > 0 && (
-          <ProfileReminderBanner
-            missing={ownProfileMissing}
-            onComplete={() => onCompleteOwnProfile?.()}
-            onDismiss={() => onDismissProfileReminder?.()}
-          />
-        )}
+        <AccountSetupSection rows={setupRows} onDismiss={() => onDismissAccountSetup?.()} />
 
         {canSeeTeam && <DashboardAttentionPanel items={attentionItems} />}
       </PendingZone>
@@ -565,288 +548,37 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         )}
       </div>
 
-      {/* 3. Sección: Diagrama de Barras de Oportunidades Ganadas por Mes con sus Fechas */}
-      <div className="won-chart-card" id="card-won-opps-by-month">
-        <div className="won-chart-header">
-          <div className="won-chart-title-wrap">
-            <h3>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--good)" strokeWidth="2.5">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Oportunidades ganadas por mes
-            </h3>
-            <p>Evolución de ventas cerradas y fechas de cierre por periodo mensual</p>
-          </div>
+      {/* 3. Ganadas por mes — timeline navegable. Toda la lógica de ventana,
+          selección y detalle vive en el componente. */}
+      <WonByMonthChart
+        months={wonData.sortedMonths}
+        deals={wonData.allDeals}
+        totalAmount={wonData.totalWonAmount}
+        totalCount={wonData.totalWonCount}
+        onSelectOpportunity={onSelectOpportunity}
+      />
 
-          <div className="won-chart-controls">
-            <div className="won-metric-pill" id="won-summary-pill">
-              <span>Total ganado:</span>
-              <strong>{formatMoney(wonData.totalWonAmount)}</strong>
-              <span>· {wonData.totalWonCount} {wonData.totalWonCount === 1 ? 'acuerdo' : 'acuerdos'}</span>
-            </div>
-          </div>
-        </div>
+      {/* 5. El pipeline de un vistazo — cada tarjeta es un filtro.
+          Fila propia y ancho completo: seis tarjetas de ancho igual no caben en
+          una columna de la grilla que había acá. */}
+      <PipelineStageCards
+        openStages={activeStages}
+        closedStages={closedStages}
+        openCount={openOpps.length}
+        openValue={openValue}
+        onSelectStage={stage => goToOpportunities({ stage })}
+        onViewAll={() => goToOpportunities()}
+      />
 
-        {/* Diagrama de Barras con Recharts */}
-        <div className="won-chart-container" id="won-barchart-container">
-          {wonData.sortedMonths.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={wonData.sortedMonths}
-                margin={{ top: 16, right: 16, left: 0, bottom: 4 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.6} />
-                <XAxis
-                  dataKey="monthShort"
-                  axisLine={{ stroke: 'var(--border)' }}
-                  tickLine={false}
-                  tick={{ fill: 'var(--charcoal)', fontSize: 12, fontWeight: 600 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: 'var(--graphite)', fontSize: 11 }}
-                  tickFormatter={(val) => `$${(val / 1000).toFixed(0)}k`}
-                />
-                <Tooltip
-                  cursor={{ fill: 'var(--good-bg)', radius: 6 }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload as {
-                        monthName: string;
-                        totalAmount: number;
-                        count: number;
-                      };
-                      return (
-                        <div className="won-tooltip-box">
-                          <div className="won-tooltip-header">{data.monthName}</div>
-                          <div className="won-tooltip-stat">
-                            <span>Monto cerrado:</span>
-                            <strong>{formatMoney(data.totalAmount)}</strong>
-                          </div>
-                          <div className="won-tooltip-stat">
-                            <span>Acuerdos ganados:</span>
-                            <span>{data.count} {data.count === 1 ? 'oportunidad' : 'oportunidades'}</span>
-                          </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar
-                  dataKey="totalAmount"
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={52}
-                >
-                  {wonData.sortedMonths.map((entry, index) => {
-                    const isSelected = currentMonthKey === entry.monthKey;
-                    const isHovered = hoveredBarIndex === index;
-                    return (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={isSelected ? 'var(--good-deep)' : isHovered ? 'var(--good-bright)' : 'var(--good)'}
-                        cursor="pointer"
-                        onClick={() => {
-                          setSelectedMonthFilter(entry.monthKey);
-                        }}
-                        onMouseEnter={() => setHoveredBarIndex(index)}
-                        onMouseLeave={() => setHoveredBarIndex(null)}
-                      />
-                    );
-                  })}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="empty-state" style={{ padding: '32px 16px', margin: 0 }}>
-              <div className="empty-state-title">Aún no hay oportunidades ganadas</div>
-              <div className="empty-state-desc">
-                Las oportunidades marcadas como "Ganado" con su fecha estimada de cierre aparecerán aquí en el diagrama de barras mensual.
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Desglose de Acuerdos Ganados con sus Fechas */}
-        <div className="won-deals-breakdown" id="won-deals-breakdown-section">
-          <div className="won-deals-section-head" id="won-deals-section-head">
-            <h4>Detalle de acuerdos ganados y fechas</h4>
-
-            <div className="won-month-select-wrapper" id="won-month-select-wrapper">
-              <label htmlFor="won-month-dropdown" className="won-month-select-label">
-                Mes:
-              </label>
-              <select
-                id="won-month-dropdown"
-                className="won-month-select"
-                value={currentMonthKey}
-                onChange={(e) => setSelectedMonthFilter(e.target.value)}
-              >
-                {availableMonthOptions.map(m => (
-                  <option key={m.key} value={m.key}>
-                    {m.name} {m.count > 0 ? `· ${m.count} ${m.count === 1 ? 'acuerdo' : 'acuerdos'} (${formatMoney(m.totalAmount)})` : '· (0 acuerdos)'}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="won-deals-list" id="won-deals-list-items">
-            {displayedDeals.length > 0 ? (
-              displayedDeals.map(deal => (
-                <div
-                  key={deal.id}
-                  className="won-deal-row"
-                  id={`won-deal-item-${deal.id}`}
-                >
-                  <div className="won-deal-left">
-                    <div className="won-date-badge" title="Fecha de cierre">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                      <span>{deal.closeDateFormatted}</span>
-                    </div>
-
-                    <div className="won-deal-info">
-                      <div
-                        className="won-deal-name"
-                        style={{ cursor: onSelectOpportunity ? 'pointer' : 'default' }}
-                        onClick={() => onSelectOpportunity?.(deal.id)}
-                        title="Ver detalle de la oportunidad"
-                      >
-                        {deal.name}
-                      </div>
-                      <div className="won-deal-sub">
-                        <span>{deal.contactName} {deal.company ? `— ${deal.company}` : ''}</span>
-                        <span>&middot;</span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <UserAvatar name={deal.rep} size="xs" />
-                          <span>{deal.rep}</span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="won-deal-right">
-                    <div className="won-deal-value">
-                      +{formatMoney(deal.value)}
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div
-                style={{
-                  padding: '24px 16px',
-                  textAlign: 'center',
-                  color: 'var(--graphite)',
-                  fontSize: '13px',
-                  background: 'var(--cloud)',
-                  borderRadius: 'var(--r-md)',
-                  border: '1px dashed var(--border)'
-                }}
-              >
-                No se registraron oportunidades ganadas en <strong>{currentMonthOption?.name || 'este periodo'}</strong>.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      {/* 5. Pipeline por etapa — cada fila es un filtro */}
-      <div className="manager-two-col" id="dash-two-col">
-        <div className="manager-card" id="card-pipeline-stages">
-          <div className="manager-card-head">
-            <h3>Pipeline por etapa</h3>
-            <span className="head-meta">
-              {stageBreakdown.length} etapas &middot; {scopedOpps.length} oportunidades
-            </span>
-          </div>
-
-          <div className="stage-pipeline-list" id="pipeline-stage-list">
-            {activeStages.map(stage => (
-              <button
-                type="button"
-                className="stage-item-row clickable"
-                key={stage.key}
-                id={`stage-row-${stage.key}`}
-                onClick={() => goToOpportunities({ stage: stage.key })}
-                title={`Ver las oportunidades en ${stage.label}`}
-              >
-                <div className="stage-item-info">
-                  <div className="stage-name-wrap">
-                    <span className="stage-name">{stage.label}</span>
-                  </div>
-                  <div className="stage-counts">
-                    {/* The monetary value was computed and discarded before. */}
-                    <span className="stage-row-value">{formatMoney(stage.value)}</span>
-                    <span className="stage-opps-badge">
-                      {stage.count} {stage.count === 1 ? 'oportunidad' : 'oportunidades'}
-                    </span>
-                  </div>
-                </div>
-                <div className="stage-track">
-                  <div
-                    className="stage-fill"
-                    style={{
-                      width: `${Math.max(Math.round((stage.count / maxStageCount) * 100), stage.count > 0 ? 8 : 2)}%`,
-                      background: stage.color
-                    }}
-                  />
-                </div>
-              </button>
-            ))}
-
-            <div className="stage-divider" />
-
-            {closedStages.map(stage => (
-              <button
-                type="button"
-                className="stage-item-row clickable"
-                key={stage.key}
-                id={`stage-row-${stage.key}`}
-                onClick={() => goToOpportunities({ stage: stage.key })}
-                title={`Ver las oportunidades en ${stage.label}`}
-              >
-                <div className="stage-item-info">
-                  <div className="stage-name-wrap">
-                    <span className="stage-name" style={{ color: stage.color }}>
-                      {stage.label}
-                    </span>
-                  </div>
-                  <div className="stage-counts">
-                    <span className="stage-row-value">{formatMoney(stage.value)}</span>
-                    <span className="stage-opps-badge">
-                      {stage.count} {stage.count === 1 ? 'oportunidad' : 'oportunidades'}
-                    </span>
-                  </div>
-                </div>
-                <div className="stage-track">
-                  <div
-                    className={`stage-fill ${stage.key === 'ganado' ? 'won' : 'lost'}`}
-                    style={{
-                      width: `${Math.max(Math.round((stage.count / maxStageCount) * 100), stage.count > 0 ? 8 : 2)}%`
-                    }}
-                  />
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 6. El equipo — solo para quien lo gestiona */}
-        {canSeeTeam && repPerformance.length > 0 && (
-          <TeamPerformancePanel
-            reps={repPerformance}
-            memberCount={orgUsers.length}
-            onManageTeam={() => onNavigate?.('users')}
-            onSelectRep={rep => goToOpportunities({ rep })}
-          />
-        )}
-      </div>
+      {/* 6. El equipo — solo para quien lo gestiona */}
+      {canSeeTeam && repPerformance.length > 0 && (
+        <TeamPerformancePanel
+          reps={repPerformance}
+          memberCount={orgUsers.length}
+          onManageTeam={() => onNavigate?.('users')}
+          onSelectRep={rep => goToOpportunities({ rep })}
+        />
+      )}
 
       {/* 7. Qué pasó — ahora del feed real, no de un array fijo */}
       <div className="manager-activity-card" id="card-recent-activity">

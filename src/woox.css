@@ -388,7 +388,6 @@ html[data-design-system='dublinks'] .client-msg-textarea:focus,
 html[data-design-system='dublinks'] textarea.note-input:focus,
 html[data-design-system='dublinks'] .note-inline-editor textarea:focus,
 html[data-design-system='dublinks'] .ask-input-row input:focus,
-html[data-design-system='dublinks'] .won-month-select:focus,
 html[data-design-system='dublinks'] input:focus,
 html[data-design-system='dublinks'] select:focus,
 html[data-design-system='dublinks'] textarea:focus {
@@ -713,12 +712,10 @@ html[data-design-system='seline'] .badge-neutral,
 html[data-design-system='seline'] .priority-badge-pill,
 html[data-design-system='seline'] .origin-badge,
 html[data-design-system='seline'] .active-filter-badge,
-html[data-design-system='seline'] .org-profile-missing-chip,
 html[data-design-system='seline'] .team-rep-flag,
 html[data-design-system='seline'] .signin-role-tag,
 html[data-design-system='seline'] .note-opportunity-tag,
 html[data-design-system='seline'] .won-date-badge,
-html[data-design-system='seline'] .stage-opps-badge,
 html[data-design-system='seline'] .tab-badge,
 html[data-design-system='seline'] .kpi-action-tag,
 html[data-design-system='seline'] .kpi-delta {
@@ -1696,19 +1693,6 @@ main {
   color: var(--warn-deepest);
 }
 
-/* 2-Column Section (Pipeline & New Leads Today) */
-.manager-two-col {
-  display: grid;
-  grid-template-columns: 1.65fr 1fr;
-  gap: 20px;
-}
-
-@media (max-width: 960px) {
-  .manager-two-col {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-}
 
 .manager-card {
   background: var(--surface);
@@ -1739,61 +1723,142 @@ main {
   color: var(--graphite);
 }
 
-/* Pipeline List by Stage */
-.stage-pipeline-list {
+/* =========================================================================
+   Pipeline at a glance — one card per stage, read left to right as a funnel.
+   Replaced a vertical list of proportional bars: the bar encoded the same count
+   the number already gave, and only relative to the busiest stage.
+   ========================================================================= */
+ /* Mismo chrome que .manager-card y .won-chart-card: era el único bloque del
+    dashboard sin card, y se leía como texto suelto sobre el canvas. */
+.pipeline-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: none;
+  margin-bottom: 20px;
+}
+
+/* El separador bajo el encabezado también viene de .manager-card-head. */
+.pipeline-head {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.stage-item-row {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.stage-item-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-}
-
-.stage-name-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.stage-color-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.stage-name {
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.stage-counts {
-  display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-soft);
 }
-
-.stage-opps-badge {
-  font-size: 12px;
-  color: var(--graphite);
+.pipeline-head-text {
+  flex: 1;
+  min-width: 0;
 }
-
-.stage-opps-val {
+.pipeline-title {
+  font-size: 15px;
   font-weight: 600;
   color: var(--ink);
+  line-height: 1.3;
+}
+.pipeline-subtitle {
+  font-size: 13px;
+  color: var(--ink-500);
   font-variant-numeric: tabular-nums;
-  min-width: 75px;
-  text-align: right;
+  margin-top: 2px;
+}
+.pipeline-head .btn {
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+/* Four open stages, the split, then the two outcomes. The split gets its own
+   `auto` column so the six cards stay exactly equal width. */
+.pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) auto repeat(2, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+.pipeline-split {
+  width: 1px;
+  align-self: stretch;
+  margin: 0 4px;
+  border-left: 1px dashed var(--hairline-strong);
+}
+
+.pipeline-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  position: relative;
+  padding: 14px 14px 12px;
+  /* Hundidas dentro del card: en blanco sobre blanco solo las definiría el
+     borde, y se perdería la lectura de seis piezas. */
+  background: var(--cloud);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.pipeline-card:hover {
+  border-color: var(--hairline-strong);
+  background: var(--surface);
+}
+.pipeline-card:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+/* The stage's colour, the same one the badges and the stage selector use. */
+.pipeline-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.pipeline-card-stage {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-700);
+  margin-bottom: 6px;
+}
+.pipeline-card-count {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.pipeline-card-unit {
+  font-size: 12px;
+  color: var(--ink-500);
+}
+.pipeline-card-value {
+  font-size: 13px;
+  color: var(--ink-500);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+
+/* Six across stops fitting before the dashboard's own 960px break: at three per
+   row the split would land mid-row, where it means nothing, so it goes. */
+@media (max-width: 1180px) {
+  .pipeline-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .pipeline-split {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  .pipeline-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .stage-track {
@@ -2046,10 +2111,6 @@ main {
   padding-top: 0;
 }
 
-/* What "Completar después" leaves on the Dashboard. One line, and quieter
-   than the organization notice above it — a personal detail, not a setup task
-   the organization is waiting on. */
-
 /* Demo-only tooling on the sign-in screen. Dashed and off to the side on
    purpose: it has to be impossible to mistake for part of signing in. Only
    rendered when the build asked for it. */
@@ -2123,47 +2184,37 @@ main {
   padding: 8px 10px;
   margin-bottom: 16px;
 }
-/* What "Completar después" leaves on the Dashboard. Quieter than the
-   organization notice above it — a personal detail, not a setup task the
-   organization is waiting on.
-
-   Names the pending fields rather than charting them: a progress bar for three
-   items said nothing the count did not, and stretched the full width of the
-   page to say it. */
-.profile-reminder-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 14px;
-  margin-bottom: 16px;
+/* =========================================================================
+   "Termina de configurar tu cuenta" — one card, one row per pending setup task.
+   Replaced two stacked amber banners that each carried their own progress bar
+   and their own dismiss.
+   ========================================================================= */
+.setup-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  /* The amber lives in the accent, not in a fill: the organization notice above
-     is already an amber block, and stacking two would lose the difference
-     between what the company needs and a personal detail. */
   border-left: 3px solid var(--warn);
   border-radius: var(--r-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
   opacity: 1;
   transform: translateY(0);
-  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
 }
 
-/* Exit state. The parent unmounts once the transition has run. */
-.profile-reminder-banner.is-dismissing {
+/* Leaving, whether because everything got done or because of "Más tarde". */
+.setup-card.is-exiting {
   opacity: 0;
   transform: translateY(-6px);
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .profile-reminder-banner {
-    transition: none;
-  }
-  .profile-reminder-banner.is-dismissing {
-    transform: none;
-  }
+.setup-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
 }
-.profile-reminder-icon {
+.setup-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2174,35 +2225,24 @@ main {
   color: var(--warn-ink);
   flex-shrink: 0;
 }
-
-/* Takes the slack the bar used to occupy, so the actions stay pinned to the
-   right edge and the copy never floats in dead space. */
-.profile-reminder-text {
+.setup-title {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.profile-reminder-title {
   font-size: 13.5px;
   font-weight: 600;
   color: var(--ink);
-  line-height: 1.3;
 }
-.profile-reminder-detail {
-  font-size: 12px;
+/* The count is the changing part, so it reads as data rather than title. */
+.setup-count {
+  font-weight: 500;
   color: var(--ink-500);
-  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
 }
-
-.profile-reminder-banner .btn {
+.setup-head .btn {
   flex-shrink: 0;
 }
 
-/* Not .btn-ghost: that one carries a border in this system, which gave
-   dismissing the same visual weight as the action beside it. */
-.profile-reminder-dismiss {
+.setup-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2213,24 +2253,100 @@ main {
   border: none;
   background: transparent;
   border-radius: var(--r-md);
-  color: var(--ink-300);
+  color: var(--ink-500);
   cursor: pointer;
   transition: background 0.15s var(--ease), color 0.15s var(--ease);
 }
-.profile-reminder-dismiss:hover {
+.setup-toggle:hover {
   background: var(--cloud);
-  color: var(--ink-700);
+  color: var(--ink);
 }
-.profile-reminder-dismiss:focus-visible {
+.setup-toggle:focus-visible {
   outline: 2px solid var(--accent-ring);
   outline-offset: 2px;
 }
 
-/* Narrow: the detail line goes first — the title plus the button still say
-   what to do. */
-@media (max-width: 560px) {
-  .profile-reminder-detail {
-    display: none;
+.setup-body {
+  border-top: 1px solid var(--border);
+}
+
+.setup-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 14px 11px 52px; /* aligned under the title, past the icon */
+  opacity: 1;
+  transition: opacity 0.25s var(--ease);
+}
+.setup-row + .setup-row {
+  border-top: 1px solid var(--border-soft);
+}
+/* A finished row fades before it goes, rather than blinking out. */
+.setup-row.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.setup-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.setup-row-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.setup-row-hint {
+  font-size: 12px;
+  color: var(--ink-500);
+  line-height: 1.35;
+}
+
+.setup-row-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 180px;
+  flex-shrink: 0;
+}
+.setup-row-progress .stage-track {
+  flex: 1;
+  min-width: 0;
+}
+.setup-row-count {
+  font-size: 11.5px;
+  color: var(--ink-500);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.setup-row .btn {
+  flex-shrink: 0;
+}
+
+/* Narrow: the row stacks and the progress spans the width, so nothing is
+   squeezed to nothing. */
+@media (max-width: 760px) {
+  .setup-row {
+    flex-wrap: wrap;
+    padding-left: 14px;
+  }
+  .setup-row-progress {
+    width: 100%;
+    order: 3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .setup-card,
+  .setup-row {
+    transition: none;
+  }
+  .setup-card.is-exiting {
+    transform: none;
   }
 }
 
@@ -2475,65 +2591,7 @@ main {
   border-color: var(--warn-soft-strong);
 }
 
-/* ---- Clickable pipeline rows ---- */
-.stage-item-row.clickable {
-  cursor: pointer;
-  border: 1px solid transparent;
-  border-radius: var(--r-md);
-  margin: 0 -8px;
-  padding: 6px 8px;
-  width: calc(100% + 16px);
-  background: transparent;
-  font-family: inherit;
-  text-align: left;
-  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
-}
-.stage-item-row.clickable:hover {
-  background: var(--cloud);
-  border-color: var(--border);
-}
-.stage-item-row.clickable:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 1px;
-}
-.stage-row-value {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
 
-/* Shortcut chips in the Dashboard's organization-profile notice. A real
-   class rather than inline styles because these are buttons and need hover
-   and focus states. */
-.org-profile-missing-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 9px;
-  font-size: 11.5px;
-  font-weight: 600;
-  font-family: inherit;
-  color: var(--warn-ink);
-  background: var(--warn-soft);
-  border: 1px solid var(--warn-soft-strong);
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
-}
-.org-profile-missing-chip:hover {
-  background: var(--warn-soft-strong);
-  border-color: var(--warn-border);
-}
-.org-profile-missing-chip:focus-visible {
-  outline: 2px solid var(--warn-border);
-  outline-offset: 2px;
-}
-
-.stage-divider {
-  margin: 10px 0;
-  border-top: 1px dashed var(--border);
-}
 
 /* Right Column: New Leads Today Breakdown */
 .today-leads-box {
@@ -2850,40 +2908,111 @@ main {
   flex-wrap: wrap;
 }
 
-.won-month-select-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.won-month-select-label {
+/* Sustituye al dropdown de mes: el click en la barra ya elige, esto solo dice
+   cuál se está inspeccionando. */
+.won-deals-month-label {
   font-size: 12px;
-  color: var(--graphite);
-  font-weight: 500;
+  color: var(--ink-500);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.won-month-select {
-  padding: 6px 32px 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-  background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 10px center;
+/* ---- Timeline navegable del gráfico ---- */
+.won-chart-scroller {
+  position: relative;
+}
+
+/* Desvanecido en el borde por el que hay más contenido. Es la señal de que se
+   puede seguir, y no ocupa lugar cuando el gráfico entra completo. */
+.won-chart-scroller::before,
+.won-chart-scroller::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 26px; /* por encima de las etiquetas de mes */
+  width: 40px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s var(--ease);
+  z-index: 1;
+}
+.won-chart-scroller::before {
+  left: 44px; /* después del canal del eje Y */
+  background: linear-gradient(to right, var(--surface), transparent);
+}
+.won-chart-scroller::after {
+  right: 0;
+  background: linear-gradient(to left, var(--surface), transparent);
+}
+.won-chart-scroller.can-back::before,
+.won-chart-scroller.can-forward::after {
+  opacity: 1;
+}
+
+.won-chart-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  appearance: none;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-500);
   cursor: pointer;
-  outline: none;
-  min-width: 230px;
-  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+  /* Discreto hasta que se lo busca: el gráfico es el contenido, no los mandos. */
+  opacity: 0.55;
+  transition: opacity 0.15s var(--ease), color 0.15s var(--ease),
+    border-color 0.15s var(--ease);
+}
+.won-chart-nav:hover {
+  opacity: 1;
+  color: var(--ink);
+  border-color: var(--hairline-strong);
+}
+.won-chart-nav:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+.won-chart-nav.prev {
+  left: 46px;
+}
+.won-chart-nav.next {
+  right: 2px;
 }
 
-.won-month-select:hover {
-  border-color: var(--steel);
+/* Arrastrar mueve el timeline, así que el cursor lo anuncia. */
+.won-chart-scroller.can-back .won-chart-container,
+.won-chart-scroller.can-forward .won-chart-container {
+  cursor: grab;
+  touch-action: pan-y;
 }
 
-.won-month-select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
+/* El detalle se refresca al cambiar de mes: un fundido corto evita que la lista
+   salte de golpe. */
+.won-deals-list {
+  animation: wonDealsIn 0.2s var(--ease);
+}
+@keyframes wonDealsIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .won-deals-list {
+    animation: none;
+  }
 }
 
 .won-filter-pill {

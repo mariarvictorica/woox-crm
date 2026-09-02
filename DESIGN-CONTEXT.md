@@ -68,7 +68,8 @@ encabezado y antes de cualquier lista, tabla o número. Si no hay ninguna, el
 contenido arranca sin dejar hueco. Vale para todos los roles.
 
 **El dashboard está ordenado por urgencia, no por jerarquía de datos:**
-1. Avisos de configuración pendiente — datos de la empresa, perfil personal
+1. "Termina de configurar tu cuenta" — un card con una fila por pendiente de
+   configuración: tu perfil, y la empresa si sos su Owner
 2. "Necesita tu atención" — cola de filas accionables, cada una lleva a la lista
    ya filtrada
 3. KPIs, gráfico de ganadas por mes, pipeline por etapa (cada fila filtra)
@@ -113,10 +114,11 @@ con radios generosos y una regla propia — **badges con relleno, sin borde**.
   hacer con ella está a medias. Cada número lleva a la lista que lo produjo.
 - **Ninguna métrica porque exista en la base.** Si no cambia una decisión, no va.
 - **Lo pendiente va arriba y agrupado**, antes de cualquier lista o número:
-  primero los avisos de configuración, después la cola de seguimiento. Ámbar si
-  la organización lo necesita para funcionar, acento ámbar y descartable si es
-  personal. Un aviso permanente se vuelve mobiliario, así que lo personal se
-  puede cerrar para siempre.
+  primero la configuración, después la cola de seguimiento. La configuración es
+  **un solo card con una fila por pendiente**, no un aviso por cada cosa: nunca
+  fueron tareas separadas en la cabeza del usuario, solo en la nuestra. Un aviso
+  permanente se vuelve mobiliario, así que se puede cerrar para siempre — con
+  una sola acción para todo el card, no una por fila.
 - **Un estado bloqueante siempre necesita salida.** Si una pantalla toma el
   control y tapa el sidebar, lleva su propio "Cerrar sesión".
 - **Lo opcional es opcional de verdad.** Puesto, teléfono y foto nunca bloquean

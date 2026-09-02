@@ -198,12 +198,27 @@ export default function App() {
    * The demo tool bypasses both conditions on purpose: it exists to show the
    * notice using an account that is complete and pre-dismissed.
    */
-  const ownProfileMissing = useMemo(() => {
-    if (simulatingProfileBanner && SHOW_DEMO_TOOLS) return USER_PROFILE_FIELDS;
-    if (!currentUser || currentUser.profileBannerDismissed) return undefined;
-    const missing = getUserMissingFields(currentUser);
-    return missing.length > 0 ? missing : undefined;
-  }, [currentUser, simulatingProfileBanner]);
+  const ownProfileMissing = useMemo(
+    () =>
+      simulatingProfileBanner && SHOW_DEMO_TOOLS
+        ? USER_PROFILE_FIELDS
+        : getUserMissingFields(currentUser),
+    [currentUser, simulatingProfileBanner]
+  );
+
+  /**
+   * Whether the setup section has been put away. Kept separate from what is
+   * missing, because it governs **both** rows: "Más tarde" is one decision about
+   * the section, not one per row.
+   *
+   * The demo tooling forces it back to false without touching the record, so a
+   * client walkthrough always shows the section and the account is left as it
+   * was found.
+   */
+  const accountSetupDismissed =
+    simulatingProfileBanner && SHOW_DEMO_TOOLS
+      ? false
+      : Boolean(currentUser?.accountSetupDismissed);
   // Everyone in the signed-in user's organization. Filtering by name keeps
   // other tenants' users (and their Owners) out of this org's Usuarios list.
   const orgUsers = users.filter(u => currentOrg && u.organization === currentOrg.name);
@@ -372,7 +387,15 @@ export default function App() {
     showToast(`Organización "${newOrg.name}" creada con éxito`);
   };
 
-  const handleUpdateOrganization = (updated: Organization) => {
+  /**
+   * `scope` only picks the confirmation wording. The Owner editing their own
+   * company reads "tu perfil de organización"; the Super Admin editing one of
+   * many needs to be told which one they just changed.
+   */
+  const handleUpdateOrganization = (
+    updated: Organization,
+    scope: 'own' | 'tenant' = 'tenant'
+  ) => {
     const previous = organizations.find(o => o.id === updated.id);
     setOrganizations(prev => prev.map(o => (o.id === updated.id ? updated : o)));
 
@@ -387,7 +410,11 @@ export default function App() {
       );
     }
 
-    showToast(`Organización "${updated.name}" actualizada con éxito`);
+    showToast(
+      scope === 'own'
+        ? 'Perfil de la organización actualizado'
+        : `Organización "${updated.name}" actualizada con éxito`
+    );
   };
 
   // Super Admin adding/editing a tenant's user. Deliberately separate from
@@ -745,10 +772,10 @@ export default function App() {
     // again later it is owed once more. Only closing it by hand persists.
   };
 
-  /** The user closing the notice. A permanent choice — see the field's docs. */
-  const handleDismissProfileBanner = () => {
+  /** "Más tarde" on the setup section. Covers both rows at once, permanently. */
+  const handleDismissAccountSetup = () => {
     setUsers(prev =>
-      prev.map(u => (u.id === currentUserId ? { ...u, profileBannerDismissed: true } : u))
+      prev.map(u => (u.id === currentUserId ? { ...u, accountSetupDismissed: true } : u))
     );
   };
 
@@ -1032,15 +1059,16 @@ export default function App() {
               isOrgOwner={capabilities.manageOrganization && isOrgOwner}
               onCompleteOrgProfile={handleCompleteOrgProfile}
               ownProfileMissing={ownProfileMissing}
+              accountSetupDismissed={accountSetupDismissed}
               onCompleteOwnProfile={() => setIsEditProfileOpen(true)}
-              onDismissProfileReminder={() => {
+              onDismissAccountSetup={() => {
                 // Closing it during a demo only ends the demo. Writing the
                 // dismissal would leave the sample account changed after a
                 // client walkthrough, and the tooling is meant to touch nothing.
                 if (simulatingProfileBanner) {
                   setSimulatingProfileBanner(false);
                 } else {
-                  handleDismissProfileBanner();
+                  handleDismissAccountSetup();
                 }
               }}
             />
@@ -1124,7 +1152,7 @@ export default function App() {
               organization={currentOrg}
               owner={currentUser}
               allOrganizations={organizations}
-              onUpdateOrganization={handleUpdateOrganization}
+              onUpdateOrganization={org => handleUpdateOrganization(org, 'own')}
               focusField={pendingOrgField}
               onFocusFieldHandled={() => setPendingOrgField(null)}
             />

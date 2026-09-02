@@ -286,6 +286,26 @@ export const LeadDetailView: React.FC<LeadDetailViewProps> = ({
             </div>
 
             <div className="field-list">
+              {/* La empresa va primero: es lo que identifica la cuenta, igual que
+                  el nombre.
+
+                  Vacía solo puede significar una cosa: los dos formularios que
+                  escriben un contacto derivan el tipo de cuenta de este campo
+                  (`type: company.trim() ? 'Empresa' : 'Particular'`), así que sin
+                  empresa el contacto es un Particular y no un dato faltante. Por
+                  eso "Sin empresa" y no "Sin especificar". */}
+              <div className="field">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 21h18M3 7v14M21 7v14M6 7V3h12v4M9 7h6M9 11h6M9 15h6" />
+                </svg>
+                <div className="ftext">
+                  <div className="k">Empresa</div>
+                  <div className={`v ${contact.company ? '' : 'empty'}`} id="dt-company">
+                    {contact.company || 'Sin empresa'}
+                  </div>
+                </div>
+              </div>
+
               <div className="field">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.4-1.4a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.8 2Z" />

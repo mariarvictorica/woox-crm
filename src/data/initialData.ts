@@ -682,6 +682,65 @@ export function isoMonthKey(iso?: string): string | null {
   return m ? `${m[1]}-${m[2]}` : null;
 }
 
+/**
+ * The `count` consecutive months ending at `anchorKey` (inclusive), oldest
+ * first. Used by the won-deals chart so the axis is a real timeline instead of
+ * only the months that happened to have a sale — without this, a month with no
+ * wins vanished and two non-adjacent months were drawn side by side as if they
+ * followed each other.
+ *
+ * Returns [] for the '9999-99' sentinel that stands in for a deal with no close
+ * date: that is not a point in time and must not anchor a window.
+ */
+export function monthWindow(
+  anchorKey: string,
+  count: number
+): { monthKey: string; monthName: string; monthShort: string }[] {
+  const m = anchorKey.match(/^(\d{4})-(\d{2})$/);
+  if (!m || anchorKey === '9999-99' || count < 1) return [];
+
+  const anchorYear = Number(m[1]);
+  const anchorMonth = Number(m[2]) - 1; // 0-based, like MONTH_NAMES_ES
+  const out: { monthKey: string; monthName: string; monthShort: string }[] = [];
+
+  for (let back = count - 1; back >= 0; back--) {
+    const total = anchorYear * 12 + anchorMonth - back;
+    const year = Math.floor(total / 12);
+    const month = total % 12;
+    out.push({
+      monthKey: `${year}-${String(month + 1).padStart(2, '0')}`,
+      monthName: `${MONTH_NAMES_ES[month]} ${year}`,
+      monthShort: `${MONTH_SHORTS_ES[month]} '${String(year).slice(2)}`
+    });
+  }
+
+  return out;
+}
+
+/**
+ * Every month from `fromKey` to `toKey` inclusive, oldest first — the timeline
+ * the won-deals chart scrolls along.
+ *
+ * It starts at the first month that has a sale, not a fixed number of months
+ * back: leading empty columns were the whole complaint about the old chart. A
+ * gap *inside* the range is kept, because collapsing it would draw two
+ * non-adjacent months side by side as if they followed each other.
+ */
+export function monthRange(
+  fromKey: string,
+  toKey: string
+): { monthKey: string; monthName: string; monthShort: string }[] {
+  const a = fromKey.match(/^(\d{4})-(\d{2})$/);
+  const b = toKey.match(/^(\d{4})-(\d{2})$/);
+  if (!a || !b) return [];
+
+  const from = Number(a[1]) * 12 + Number(a[2]) - 1;
+  const to = Number(b[1]) * 12 + Number(b[2]) - 1;
+  if (to < from) return [];
+
+  return monthWindow(toKey, to - from + 1);
+}
+
 /** The month keys of the most recent month present in `keys`, and the one
  *  before it. Derived from the data rather than from today's date: the seed's
  *  latest activity is not necessarily the current month, and a dashboard that
@@ -886,6 +945,19 @@ export function getOrgMissingFields(org?: Organization): OrgProfileField[] {
   return ORG_PROFILE_FIELDS.filter(f => !(org[f.key] || '').toString().trim());
 }
 
+/**
+ * "puesto, teléfono y foto de perfil" — the labels read as a sentence, so no
+ * per-field grammar is needed. Shared by both rows of the account-setup
+ * section, which is why it does not care whether the fields are a user's or an
+ * organization's.
+ */
+export const listFieldLabels = (fields: { label: string }[]): string => {
+  const labels = fields.map(f => f.label.toLowerCase());
+  if (labels.length === 0) return '';
+  if (labels.length === 1) return labels[0];
+  return `${labels.slice(0, -1).join(', ')} y ${labels[labels.length - 1]}`;
+};
+
 export type UserProfileFieldKey = 'position' | 'phone' | 'avatarUrl';
 
 export interface UserProfileField {
@@ -939,7 +1011,7 @@ export const INITIAL_USERS: UserMember[] = [
     email: 'enrique@woox.mx',
     role: 'Super Admin (SA)',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hoy, 09:12',
     initials: 'EM',
     avatarBg: 'var(--accent)',
@@ -957,7 +1029,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Manager',
     organization: 'KUM S.A',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hoy, 09:05',
     initials: 'PB',
     avatarBg: 'var(--primary)',
@@ -974,7 +1046,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Rep',
     organization: 'KUM S.A',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hoy, 10:44',
     initials: 'D',
     avatarBg: 'var(--info)',
@@ -991,7 +1063,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Rep',
     organization: 'KUM S.A',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hoy, 08:57',
     initials: 'M',
     avatarBg: 'var(--orange)',
@@ -1008,7 +1080,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Rep',
     organization: 'KUM S.A',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'ayer, 18:30',
     initials: 'A',
     avatarBg: 'var(--storm-deep)',
@@ -1030,7 +1102,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Manager',
     organization: 'Distribuidora Aceval S.A. de C.V.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hoy, 08:15',
     initials: 'RA',
     avatarBg: 'var(--primary)'
@@ -1046,7 +1118,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Manager',
     organization: 'Grupo Ferretero del Norte S.A.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'ayer, 17:40',
     initials: 'GB',
     avatarBg: 'var(--info)'
@@ -1062,7 +1134,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Manager',
     organization: 'Comercial Yaguará S.A. de C.V.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hoy, 10:02',
     initials: 'NC',
     avatarBg: 'var(--orange)'
@@ -1092,7 +1164,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Manager',
     organization: 'Almacenes Trébol S.A. de C.V.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: '2d ago',
     initials: 'LF',
     avatarBg: 'var(--accent)'
@@ -1108,7 +1180,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Manager',
     organization: 'Insumos Constructivos Miralta S.A.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hoy, 09:31',
     initials: 'HP',
     avatarBg: 'var(--storm-deep)'
@@ -1124,7 +1196,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Manager',
     organization: 'Pinturas y Solventes del Bajío S.A.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: '3d ago',
     initials: 'SA',
     avatarBg: 'var(--primary)'
@@ -1140,7 +1212,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Manager',
     organization: 'Corporativo Santamarina S.A. de C.V.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hoy, 07:58',
     initials: 'BS',
     avatarBg: 'var(--info)'
@@ -1170,7 +1242,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Manager',
     organization: 'Grupo Cimarrón S.A. de C.V.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: '5d ago',
     initials: 'AL',
     avatarBg: 'var(--orange)'
@@ -1186,7 +1258,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Rep',
     organization: 'Distribuidora Aceval S.A. de C.V.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hoy, 09:44',
     initials: 'MT',
     avatarBg: 'var(--orange)'
@@ -1202,7 +1274,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Rep',
     organization: 'Distribuidora Aceval S.A. de C.V.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'ayer, 16:12',
     initials: 'FO',
     avatarBg: 'var(--info)'
@@ -1218,7 +1290,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Rep',
     organization: 'Corporativo Santamarina S.A. de C.V.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hoy, 11:05',
     initials: 'CR',
     avatarBg: 'var(--accent)'
@@ -1234,7 +1306,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Manager',
     organization: 'Corporativo Santamarina S.A. de C.V.',
     status: 'Activo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: '2d ago',
     initials: 'TI',
     avatarBg: 'var(--primary)'
@@ -1249,7 +1321,7 @@ export const INITIAL_USERS: UserMember[] = [
     role: 'Rep',
     organization: 'Almacenes Trébol S.A. de C.V.',
     status: 'Inactivo',
-    profileBannerDismissed: true,
+    accountSetupDismissed: true,
     lastAccess: 'hace 3 semanas',
     initials: 'RE',
     avatarBg: 'var(--graphite)'
